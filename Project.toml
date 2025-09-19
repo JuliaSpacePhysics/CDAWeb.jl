@@ -1,0 +1,7 @@
+name = "CDAWeb"
+uuid = "950ff2a9-823f-469c-91a7-754a5d85edca"
+authors = ["Beforerr <zzj956959688@gmail.com> and contributors"]
+version = "1.0.0-DEV"
+
+[compat]
+julia = "1.10"
