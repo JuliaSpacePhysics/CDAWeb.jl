@@ -8,8 +8,7 @@ makedocs(;
     authors="Beforerr <zzj956959688@gmail.com> and contributors",
     sitename="CDAWeb.jl",
     format=Documenter.HTML(;
-        canonical="https://Beforerr.github.io/CDAWeb.jl",
-        edit_link="main",
+        canonical="https://juliaspacephysics.github.io/CDAWeb.jl",
         assets=String[],
     ),
     pages=[
@@ -18,6 +17,6 @@ makedocs(;
 )
 
 deploydocs(;
-    repo="github.com/Beforerr/CDAWeb.jl",
-    devbranch="main",
+    repo="github.com/JuliaSpacePhysics/CDAWeb.jl",
+    push_preview = true,
 )
