@@ -1,3 +1,7 @@
 [deps]
 CDAWeb = "950ff2a9-823f-469c-91a7-754a5d85edca"
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
+PrettyTables = "08abe8d2-0d0c-5749-adfa-8a2ac140af0d"
+
+[sources]
+CDAWeb = { path = ".." }
