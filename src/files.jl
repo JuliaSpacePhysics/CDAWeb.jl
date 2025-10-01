@@ -19,7 +19,7 @@ function _get_file_urls_from_api(args...; kw...)
     check_response(response)
     # Extract file URLs from JSON response
     data = JSON3.read(response.body)
-    return [desc.Name for desc in data.FileDescription]
+    return (desc.Name for desc in data.FileDescription)
 end
 
 """Fetch files from API, download them, and add to cache."""
@@ -31,54 +31,76 @@ function _fetch_and_cache_files!(t0, t1, dataset, variable; orig = false, disabl
     return file_paths
 end
 
-"""Fetch and cache original CDF files."""
+"""Find cached files and missing time ranges using SQL query (for orig=true)."""
 function find_cached_and_missing(dataset, start_time, stop_time; kw...)
-    cache = cache_metadata(true)
+    # Check coverage and collect files
+    current_time = start_time
+    cached_files = String[]
 
-    is_valids = findall(cache) do row
-        row.dataset == dataset &&
-            row.start_time < stop_time &&
-            row.end_time >= start_time &&
-            isfile(row.path)
+    for (entry_start, entry_end, path) in _query(dataset, start_time, stop_time)
+        !isfile(path) && return cached_files, [(start_time, stop_time)]
+        if unix2datetime(entry_start) > current_time
+            # Gap found - need to fetch missing range
+            return cached_files, [(start_time, stop_time)]
+        end
+        push!(cached_files, path)
+        current_time = max(current_time, unix2datetime(entry_end))
+
+        if current_time >= stop_time
+            # Full coverage achieved
+            return cached_files, Tuple{DateTime, DateTime}[]
+        end
     end
-    has_full_coverage = _check_cache_coverage(cache, is_valids, start_time, stop_time)
-    missing_ranges = has_full_coverage ? Tuple{DateTime, DateTime}[] : [(start_time, stop_time)]
-    return cache.path[is_valids], missing_ranges
+
+    # Gap at the end - need to fetch entire range
+    return cached_files, [(start_time, stop_time)]
 end
 
-"""Find cached files and missing time ranges using fragment-based caching (only for orig=false)."""
+"""Find cached files and missing time ranges using fragment-based caching and SQL (for orig=false)."""
 function find_cached_and_missing(dataset, variable, start_time, stop_time, fragment_period::Period)
     # Split requested range into fragments
     fragments = split_into_fragments(start_time, stop_time, fragment_period)
-    # Categorize fragments as cached or missing
-    cache = cache_metadata(false)
 
-    cached_files = String[]
-    missings = Tuple{DateTime, DateTime}[]
-
-    for (frag_start, frag_stop) in fragments
-        matching_rows = findall(cache) do row
-            row.dataset == dataset &&
-                row.variable == variable &&
-                row.start_time <= frag_start &&
-                row.end_time >= frag_stop &&
-                isfile(row.path)
-        end
-        if !isempty(matching_rows)
-            for idx in matching_rows
-                file_path = cache.path[idx]
-                if file_path ∉ cached_files
-                    push!(cached_files, file_path)
-                end
-            end
-        else
-            push!(missings, (frag_start, frag_stop))
-        end
+    entries = Tuple{DateTime, DateTime, String}[]
+    for row in _query(dataset, variable, start_time, stop_time)
+        push!(entries, (unix2datetime(row[1]), unix2datetime(row[2]), row[3]))
     end
 
-    # Group contiguous missing fragments to minimize API calls
-    # missing_ranges = group_contiguous_fragments(missing_fragments)
-    return cached_files, missings
+    cached_files = Set{String}()
+    missings = Tuple{DateTime, DateTime}[]
+
+    # Check coverage for each fragment
+    entry_idx = 1
+    for (frag_start, frag_stop) in fragments
+        current_time = frag_start
+        fragment_covered = false
+
+        # Find entries that overlap with this fragment
+        while entry_idx <= length(entries)
+            entry_start, entry_end, path = entries[entry_idx]
+
+            # Skip entries that end before fragment starts
+            if entry_end < frag_start
+                entry_idx += 1 && continue
+            end
+
+            # Stop if entry starts after fragment ends
+            entry_start >= frag_stop && break
+            # Check for gap
+            entry_start > current_time && break
+
+            push!(cached_files, path)
+            current_time = max(current_time, entry_end)
+            if current_time >= frag_stop
+                fragment_covered = true
+                break
+            end
+            entry_idx += 1
+        end
+        !fragment_covered && push!(missings, (frag_start, frag_stop))
+    end
+
+    return collect(cached_files), missings
 end
 
 function get_data_files(dataset, variable, start_time, stop_time; disable_cache = false, orig = false, fragment_period = Hour(24), kw...)
@@ -99,9 +121,9 @@ function get_data_files(dataset, variable, start_time, stop_time; disable_cache 
             @debug "Fetching missing range: $(range_start) to $(range_stop)"
             _fetch_and_cache_files!(range_start, range_stop, dataset, variable; orig, kw...)
         end
-        sort(all_files)
+        sort!(unique!(all_files))
     else
-        sort(cached_files)
+        sort!(unique!(cached_files))
     end
 end
 

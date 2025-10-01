@@ -76,9 +76,9 @@ function get_data(dataset, variable, start_time, stop_time; clip = false, master
     end
 end
 
-function get_data(product::AbstractString, start_time, stop_time)
+function get_data(product::AbstractString, start_time, stop_time; kw...)
     dataset, variable = _split_product(product)
-    return get_data(dataset, variable, start_time, stop_time)
+    return get_data(dataset, variable, start_time, stop_time; kw...)
 end
 
 
