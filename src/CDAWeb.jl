@@ -17,8 +17,9 @@ export find_master_cdf
 export find_datasets
 
 const master_url = "https://spdf.gsfc.nasa.gov/pub/software/cdawlib/0MASTERS/master.tar"
-const MASTERS_CDF_PATH = joinpath(homedir(), ".cdaweb", "masters")
-const DATA_CACHE_PATH = joinpath(homedir(), ".cdaweb")
+const BASE_PATH = joinpath(homedir(), ".cdaweb")
+const MASTERS_CDF_PATH = joinpath(BASE_PATH, "masters")
+const DATA_CACHE_PATH = joinpath(BASE_PATH, "data")
 
 include("master.jl")
 include("data.jl")

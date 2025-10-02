@@ -44,7 +44,7 @@ function _get_stmt_variable_cache()
 end
 
 function _get_cache_db_file(orig::Bool)
-    return joinpath(DATA_CACHE_PATH, "cache_$(orig ? "orig" : "variable").sqlite")
+    return joinpath(BASE_PATH, "cache_$(orig ? "orig" : "variable").sqlite")
 end
 
 """Initialize or get existing cache database with proper schema and settings."""
@@ -53,7 +53,7 @@ function _get_cache_db(orig::Bool)
         db_ref = orig ? _DB_CACHE_ORIG : _DB_CACHE_VARIABLE
 
         if isnothing(db_ref[])
-            mkpath(DATA_CACHE_PATH)
+            mkpath(BASE_PATH)
             db_file = _get_cache_db_file(orig)
             db = SQLite.DB(db_file)
 
