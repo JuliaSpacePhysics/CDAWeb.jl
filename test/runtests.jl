@@ -87,4 +87,6 @@ end
     )
     @test data3 isa AbstractCDFVariable
     @test length(parent(data3)) > 0
+
+    @test CDAWeb.cache_metadata().start_time isa Vector{DateTime}
 end
