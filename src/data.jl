@@ -1,5 +1,6 @@
 const CDAWEB_BASE_URL = "https://cdaweb.gsfc.nasa.gov/WS/cdasr/1"
 const DATA_VIEWS_PATH = "dataviews/sp_phys/datasets"
+const ENDPOINT = "$(CDAWEB_BASE_URL)/$(DATA_VIEWS_PATH)"
 const HEADER = ["Accept" => "application/json"]
 
 struct CDAWebError <: Exception
@@ -38,7 +39,7 @@ end
 
 function _get_variable_from_file(file_path::String, variable::String)
     dataset = CDFDataset(file_path)
-    try
+    return try
         dataset[variable]
     catch
         available_vars = collect(keys(dataset))
@@ -62,11 +63,11 @@ function get_data(dataset, variable, start_time, stop_time; clip = false, master
     file_paths = get_data_files(dataset, variable, start_time, stop_time; kw...)
     arrays = map(fp -> _get_variable_from_file(fp, variable), file_paths)
     metadata = !master_attributes ? nothing : begin
-        master_cdf = find_master_cdf(dataset)
-        master_cdf[variable].attrib
-        # num = arrays[1].data.vdr.num
-        # CDF.CommonDataFormat.vattrib(master_cdf.source, num)
-    end
+            master_cdf = find_master_cdf(dataset)
+            master_cdf[variable].attrib
+            # num = arrays[1].data.vdr.num
+            # CDF.CommonDataFormat.vattrib(master_cdf.source, num)
+        end
     var = ConcatCDFVariable(arrays; metadata)
     return if clip
         indices = CDFDatasets.find_indices(var, start_time, stop_time)
@@ -85,4 +86,4 @@ end
 function get_data(dataset, variable)
     return find_master_cdf(dataset)[variable]
 end
-# 
+#

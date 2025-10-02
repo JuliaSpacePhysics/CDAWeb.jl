@@ -94,3 +94,18 @@ end
     CDAWeb.clear_cache!()
     @test length(CDAWeb.cache_metadata().start_time) == 0
 end
+
+@testset "Variables" begin
+    res = CDAWeb.get_variables("WI_H1_SWE")
+    @test length(res) == 81
+    @test collect(keys(res[1])) == [:Name, :ShortDescription, :LongDescription]
+end
+
+@testset "Datasets" begin
+    res = CDAWeb.get_datasets(; observatoryGroup = "ACE", instrumentType = "Magnetic Fields (space)")
+    @test length(res) > 0
+
+    id = "AC_H2_MFI"
+    res = CDAWeb.get_dataset(id)
+    @test res.Id == id
+end

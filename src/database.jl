@@ -10,7 +10,9 @@ const _STMT_ORIG_CACHE = Ref{Union{SQLite.Stmt, Nothing}}(nothing)
 const _STMT_VARIABLE_CACHE = Ref{Union{SQLite.Stmt, Nothing}}(nothing)
 
 # Helper functions for Unix timestamp conversion
-@inline _datetime_to_unix(dt::DateTime) = Int(Dates.datetime2unix(dt))
+# https://www.sqlite.org/datatype3.html
+# https://sqlite.org/lang_datefunc.html
+@inline _datetime_to_unix(dt::DateTime) = round(Int, Dates.datetime2unix(dt))
 
 """Get the prepared statement for orig cache queries."""
 function _get_stmt_orig_cache()
@@ -144,6 +146,7 @@ function _update_orig_cache!(dataset, start_times, end_times, files)
     end
 
     # return DBInterface.execute(db, "COMMIT")
+    return
 end
 
 """Update variable cache metadata in SQLite database (process-safe, atomic)."""
@@ -179,4 +182,5 @@ function _update_variable_cache!(dataset, variable, start_times, end_times, file
 
     end
     # return DBInterface.execute(db, "COMMIT")
+    return
 end
