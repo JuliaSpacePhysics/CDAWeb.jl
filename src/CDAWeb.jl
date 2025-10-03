@@ -12,6 +12,7 @@ using ResumableFunctions
 import CDFDatasets as CDF
 
 export get_data, get_data_files
+export get_dataset, get_datasets, get_variables
 export clear_cache!
 export find_master_cdf
 export find_datasets
@@ -22,6 +23,7 @@ const MASTERS_CDF_PATH = joinpath(BASE_PATH, "masters")
 const DATA_CACHE_PATH = joinpath(BASE_PATH, "data")
 
 include("master.jl")
+include("operation.jl")
 include("data.jl")
 include("files.jl")
 include("cache.jl")

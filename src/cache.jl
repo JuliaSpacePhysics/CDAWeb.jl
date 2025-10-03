@@ -37,8 +37,8 @@ function _add_files_to_cache!(files, dataset, variable, requested_start::DateTim
     end
 
     # interval with a left closed and right open endpoint
-    start_times = first.(timeranges)
-    end_times = last.(timeranges)
+    start_times = DateTime.(first.(timeranges))
+    end_times = DateTime.(last.(timeranges))
     @assert issorted(start_times) && issorted(end_times)
     start_times[1] = min(requested_start, start_times[1])
     end_times[1:(end - 1)] = start_times[2:end]
