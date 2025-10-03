@@ -3,16 +3,6 @@ const DATA_VIEWS_PATH = "dataviews/sp_phys/datasets"
 const ENDPOINT = "$(CDAWEB_BASE_URL)/$(DATA_VIEWS_PATH)"
 const HEADER = ["Accept" => "application/json"]
 
-struct CDAWebError <: Exception
-    message::String
-end
-
-function check_response(response)
-    return if response.status != 200
-        throw(CDAWebError("HTTP $(response.status): $(response.body)"))
-    end
-end
-
 function _split_product(product::AbstractString)
     parts = split(product, '/', limit = 2)
     @assert length(parts) == 2 "product should be of the form dataset/variable"
@@ -61,6 +51,14 @@ function get_data(dataset, variable, start_time, stop_time; clip = false, master
     start_time = DateTime(start_time)
     stop_time = DateTime(stop_time)
     file_paths = get_data_files(dataset, variable, start_time, stop_time; kw...)
+
+    # Handle case where no data files are available (e.g., 404 error)
+    if isempty(file_paths)
+        @warn "No data available for $(dataset)/$(variable) in range $(start_time) to $(stop_time). Returning empty Variable from master CDF."
+        master_cdf = find_master_cdf(dataset)
+        return master_cdf[variable]
+    end
+
     arrays = map(fp -> _get_variable_from_file(fp, variable), file_paths)
     metadata = !master_attributes ? nothing : begin
             master_cdf = find_master_cdf(dataset)
