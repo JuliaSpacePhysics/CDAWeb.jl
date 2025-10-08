@@ -11,15 +11,28 @@ function _download_file(url, dataset, args...; dir = joinpath(DATA_CACHE_PATH, d
     return output
 end
 
+function no_data_available(data)
+    return if haskey(data, :Error)
+        data.Error[1] == "No data available."
+    else
+        isempty(data)
+    end
+end
+
 function _get_file_urls_from_api(args...; kw...)
     url = _build_request_url(args...; kw...)
     @debug "Requesting data from CDAWeb: $(url)"
     # Set headers to request JSON response
-    response = HTTP.get(url, HEADER)
-    check_response(response)
-    # Extract file URLs from JSON response
+    response = HTTP.get(url, HEADER; status_exception = false)
+
     data = JSON3.read(response.body)
-    return (desc.Name for desc in data.FileDescription)
+    return if haskey(data, :FileDescription)
+         (desc.Name for desc in data.FileDescription)
+    elseif no_data_available(data)
+        String[]
+    else
+        throw(HTTP.HTTPException(response))
+    end
 end
 
 """Fetch files from API, download them, and add to cache."""
@@ -27,7 +40,7 @@ function _fetch_and_cache_files!(t0, t1, dataset, variable; orig = false, disabl
     args = orig ? (dataset,) : (dataset, variable)
     file_urls = _get_file_urls_from_api(args..., t0, t1; kw...)
     file_paths = _download_file.(file_urls, args...)
-    disable_cache || _add_files_to_cache!(file_paths, dataset, variable, t0, t1; orig)
+    disable_cache || !isempty(file_paths) && _add_files_to_cache!(file_paths, dataset, variable, t0, t1; orig)
     return file_paths
 end
 

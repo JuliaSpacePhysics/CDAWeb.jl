@@ -39,7 +39,7 @@ end
     @test dens2 isa AbstractCDFVariable
     @test CommonDataModel.name(dens2) == CommonDataModel.name(dens)
 
-    @test_throws "404" CDAWeb.get_data("PSP_SWP_SPI_SF00_L3_MOM/DENS", DateTime(1990, 1, 1), DateTime(1990, 1, 1, 1))
+    @test isempty(CDAWeb.get_data("PSP_SWP_SPI_SF00_L3_MOM/DENS", DateTime(1990, 1, 1), DateTime(1990, 1, 1, 1)))
 end
 
 @testset "Error handling" begin
@@ -108,4 +108,11 @@ end
     id = "AC_H2_MFI"
     res = CDAWeb.get_dataset(id)
     @test res.Id == id
+end
+
+@testset "Empty dataset" begin
+    t0 = DateTime(2021, 8, 8)
+    t1 = DateTime(2021, 8, 9)
+    @test get_data("WI_H1_SWE", "Proton_Np_nonlin", t0, t1) isa AbstractCDFVariable
+    @test get_data("WI_H1_SWE", "Proton_Np_nonlin", t0, t1; orig = true) isa AbstractCDFVariable
 end
