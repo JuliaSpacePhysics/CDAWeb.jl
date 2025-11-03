@@ -10,7 +10,7 @@ Documentation for [CDAWeb](https://github.com/JuliaSpacePhysics/CDAWeb.jl).
 
 ```julia
 using Pkg
-Pkg.add("https://github.com/JuliaSpacePhysics/CDAWeb.jl")
+Pkg.add("CDAWeb")
 ```
 
 ## Quick Example

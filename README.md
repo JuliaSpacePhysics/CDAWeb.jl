@@ -6,6 +6,10 @@
 
 Julia interface to NASA's CDAWeb RESTful services for accessing space physics data.
 
+**Installation**: at the Julia REPL, run `using Pkg; Pkg.add("CDAWeb")`
+
+**Documentation**: [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://JuliaSpacePhysics.github.io/CDAWeb.jl/dev/)
+
 ## Features
 
 - Local cache system to avoid redundant downloads with fine-grained control
