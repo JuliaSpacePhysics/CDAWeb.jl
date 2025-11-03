@@ -10,6 +10,26 @@ using Test
     Aqua.test_all(CDAWeb)
 end
 
+@testset "RESTful Web Services" begin
+    res = CDAWeb.get_dataviews()
+    @test length(res) > 0
+    @test res[1].Id == "sp_phys"
+
+    itypes = CDAWeb.get_instrument_types()
+    @test length(itypes) > 0
+    instruments = CDAWeb.get_instruments(; instrumentType = itypes[end].Name)
+    @test length(instruments) > 0
+    observatories = CDAWeb.get_observatories(; instrument = instruments[end].Name)
+    @test length(observatories) == 1
+    ogs = get_observatory_groups(; instrumentType = itypes[end].Name)
+    @test length(ogs) > 0
+
+    ogis = get_observatory_groups_and_instruments(; instrumentType = itypes[end].Name)
+    @test length(ogis) > 0
+
+    get_inventory("OMNI_COHO1HR_MERGED_MAG_PLASMA", DateTime(2020, 1, 1), DateTime(2020, 1, 2))
+end
+
 @testset "Master CDF lookup" begin
     CDAWeb.update_master_cdf()
     CDAWeb.find_master_cdf("dmsp-f16_ssj_precipitating-electrons-ions_00000000_v01.cdf")
