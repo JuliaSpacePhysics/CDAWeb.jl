@@ -10,6 +10,7 @@ using SQLite, DBInterface
 using TypedTables: FlexTable
 using ResumableFunctions
 import CDFDatasets as CDF
+using CDFDatasets: ConcatCDFVariable, ConcatCDFDataset, var_type
 
 export get_data, get_data_files
 export get_dataset, get_datasets, get_variables

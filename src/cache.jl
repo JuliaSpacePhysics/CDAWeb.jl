@@ -18,6 +18,7 @@ function clear_cache!()
     return
 end
 
+# Get the time range of the file.
 @inline function _get_file_time_range(file, variable)
     dataset = CDFDataset(file)
     var = dataset[variable]
@@ -27,25 +28,44 @@ end
     return isempty(times) ? nothing : (DateTime(times[1]), DateTime(times[end]))
 end
 
-function _add_files_to_cache!(files, dataset, variable, requested_start::DateTime, requested_stop::DateTime; orig = false)
-    # Get time range from file
-    timeranges = _get_file_time_range.(files, variable)
+# Select time variable(s) from the file and return the extrema of the time variable(s).
+@inline function _get_file_time_range(file)
+    dataset = CDFDataset(file)
+    t0 = typemax(DateTime)
+    t1 = typemin(DateTime)
+    for var in dataset
+        isempty(var) && continue
+        eltype(var) <: Dates.AbstractDateTime || continue
+        t0 = min(t0, DateTime(var[1]))
+        t1 = max(t1, DateTime(var[end]))
+    end
+    return t0 > t1 ? nothing : (t0, t1)  # Return nothing if no DateTime found
+end
 
+# interval with a left closed and right open endpoint
+function _expand_time_ranges(timeranges, requested_start, requested_stop)
+    start_times = first.(timeranges)
+    end_times = last.(timeranges)
+    @assert issorted(start_times) && issorted(end_times)
+    start_times[1] = min(requested_start, start_times[1])
+    # expand the end time to the next file's start time if it is later
+    N = length(timeranges)
+    for i in 1:(N - 1)
+        end_times[i] = max(end_times[i], start_times[i + 1])
+    end
+    end_times[end] = max(requested_stop, end_times[end])
+    return start_times, end_times
+end
+
+function _add_files_to_cache!(requested_start, requested_stop, files, dataset, args...)
+    timeranges = _get_file_time_range.(files, args...)
     if any(isnothing, timeranges)
         @debug "Could not determine time range for $files, skipping cache metadata update"
         return
     end
 
-    # interval with a left closed and right open endpoint
-    start_times = DateTime.(first.(timeranges))
-    end_times = DateTime.(last.(timeranges))
-    @assert issorted(start_times) && issorted(end_times)
-    start_times[1] = min(requested_start, start_times[1])
-    end_times[1:(end - 1)] = start_times[2:end]
-    end_times[end] = max(requested_stop, end_times[end])
-
-    orig ? _update_orig_cache!(dataset, start_times, end_times, files) :
-    _update_variable_cache!(dataset, variable, start_times, end_times, files)
+    start_times, end_times = _expand_time_ranges(timeranges, requested_start, requested_stop)
+    _update_cache!(dataset, args..., start_times, end_times, files)
     return
 end
 

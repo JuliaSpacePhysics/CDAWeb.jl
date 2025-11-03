@@ -27,7 +27,7 @@ function _get_file_urls_from_api(args...; kw...)
 
     data = JSON3.read(response.body)
     return if haskey(data, :FileDescription)
-         (desc.Name for desc in data.FileDescription)
+        (desc.Name for desc in data.FileDescription)
     elseif no_data_available(data)
         String[]
     else
@@ -36,11 +36,10 @@ function _get_file_urls_from_api(args...; kw...)
 end
 
 """Fetch files from API, download them, and add to cache."""
-function _fetch_and_cache_files!(t0, t1, dataset, variable; orig = false, disable_cache = false, kw...)
-    args = orig ? (dataset,) : (dataset, variable)
+function _fetch_and_cache_files!(t0, t1, args...; disable_cache = false, kw...)
     file_urls = _get_file_urls_from_api(args..., t0, t1; kw...)
     file_paths = _download_file.(file_urls, args...)
-    disable_cache || !isempty(file_paths) && _add_files_to_cache!(file_paths, dataset, variable, t0, t1; orig)
+    disable_cache || !isempty(file_paths) && _add_files_to_cache!(t0, t1, file_paths, args...)
     return file_paths
 end
 
@@ -70,7 +69,7 @@ function find_cached_and_missing(dataset, start_time, stop_time; kw...)
 end
 
 """Find cached files and missing time ranges using fragment-based caching and SQL (for orig=false)."""
-function find_cached_and_missing(dataset, variable, start_time, stop_time, fragment_period::Period)
+function find_cached_and_missing(dataset, variable, start_time, stop_time; fragment_period::Period = Hour(24))
     # Split requested range into fragments
     fragments = split_into_fragments(start_time, stop_time, fragment_period)
 
@@ -116,30 +115,27 @@ function find_cached_and_missing(dataset, variable, start_time, stop_time, fragm
     return collect(cached_files), missings
 end
 
-function get_data_files(dataset, variable, start_time, stop_time; disable_cache = false, orig = false, fragment_period = Hour(24), kw...)
+function get_data_files(dataset, variable, t0, t1; orig = false, fragment_period = Hour(24), kw...)
+    return orig ? _get_data_files(t0, t1, dataset; kw...) : _get_data_files(t0, t1, dataset, variable; find_options = (; fragment_period), kw...)
+end
+
+function _get_data_files(start_time, stop_time, dataset, args...; disable_cache = false, find_options = (;), kw...)
     start_time = DateTime(start_time)
     stop_time = DateTime(stop_time)
     dataset = any(islowercase, dataset) ? uppercase(dataset) : dataset
-
     if disable_cache
-        return _fetch_and_cache_files!(start_time, stop_time, dataset, variable; orig, disable_cache, kw...)
+        return _fetch_and_cache_files!(start_time, stop_time, dataset, args...; disable_cache, kw...)
     end
-
-    cached_files, missing_ranges = orig ? find_cached_and_missing(dataset, start_time, stop_time; kw...) :
-        find_cached_and_missing(dataset, variable, start_time, stop_time, fragment_period)
+    cached_files, missing_ranges = find_cached_and_missing(dataset, args..., start_time, stop_time; find_options...)
 
     return if !isempty(missing_ranges)
         # Fetch missing time ranges
         all_files = mapreduce(vcat, missing_ranges; init = cached_files) do (range_start, range_stop)
             @debug "Fetching missing range: $(range_start) to $(range_stop)"
-            _fetch_and_cache_files!(range_start, range_stop, dataset, variable; orig, kw...)
+            _fetch_and_cache_files!(range_start, range_stop, dataset, args...; kw...)
         end
         sort!(unique!(all_files))
     else
         sort!(unique!(cached_files))
     end
-end
-
-function get_data_files(dataset, start_time, stop_time; kw...)
-    return get_data_files(dataset, "", start_time, stop_time; orig = true, kw...)
 end
