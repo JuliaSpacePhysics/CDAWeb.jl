@@ -119,6 +119,14 @@ function get_data_files(dataset, variable, t0, t1; orig = false, fragment_period
     return orig ? _get_data_files(t0, t1, dataset; kw...) : _get_data_files(t0, t1, dataset, variable; find_options = (; fragment_period), kw...)
 end
 
+"""
+    get_original_files(id, start_time, stop_time; kw...)
+
+Get original data file paths from the `id` dataset. 
+"""
+get_original_files(id, start_time, stop_time; kw...) = _get_data_files(start_time, stop_time, id; kw...)
+
+
 function _get_data_files(start_time, stop_time, dataset, args...; disable_cache = false, find_options = (;), kw...)
     start_time = DateTime(start_time)
     stop_time = DateTime(stop_time)

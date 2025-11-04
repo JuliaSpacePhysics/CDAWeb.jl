@@ -15,12 +15,18 @@ end
     @test length(res) > 0
     @test res[1].Id == "sp_phys"
 
+    datasets = get_datasets(; observatoryGroup = "ACE", instrument = "MAG")
+    @test length(datasets) > 0
+
     itypes = get_instrument_types()
     @test length(itypes) > 0
+
     instruments = get_instruments(; instrumentType = itypes[end].Name)
     @test length(instruments) > 0
+
     observatories = get_observatories(; instrument = instruments[end].Name)
     @test length(observatories) == 1
+
     ogs = get_observatory_groups(; instrumentType = itypes[end].Name)
     @test length(ogs) > 0
 
@@ -29,6 +35,20 @@ end
 
     res = get_inventory("OMNI_COHO1HR_MERGED_MAG_PLASMA", DateTime(2020, 1, 1), DateTime(2020, 1, 2))
     @test length(res) > 0
+
+    get_original_file_descs("OMNI_COHO1HR_MERGED_MAG_PLASMA", DateTime(2020, 1, 1), DateTime(2020, 2, 1))
+
+    get_data_file_descs("OMNI_COHO1HR_MERGED_MAG_PLASMA", ["BR", "BT", "BN"], DateTime(2020, 1, 1), DateTime(2020, 1, 2))
+    get_data_file_descs("OMNI_COHO1HR_MERGED_MAG_PLASMA", ["BR", "BT", "BN"], DateTime(2020, 1, 1), DateTime(2020, 1, 2); format = "png")
+
+    @testset "Get variables" begin
+        res = CDAWeb.get_variables("WI_H1_SWE")
+        @test length(res) == 81
+        @test collect(keys(res[1])) == [:Name, :ShortDescription, :LongDescription]
+        names = CDAWeb.get_variable_names("WI_H1_SWE")
+        @test length(names) == 81
+        @test "Epoch" ∉ names
+    end
 end
 
 @testset "Master CDF lookup" begin
@@ -116,19 +136,7 @@ end
     @test length(CDAWeb.cache_metadata().start_time) == 0
 end
 
-@testset "Variables" begin
-    res = CDAWeb.get_variables("WI_H1_SWE")
-    @test length(res) == 81
-    @test collect(keys(res[1])) == [:Name, :ShortDescription, :LongDescription]
-    names = CDAWeb.get_variable_names("WI_H1_SWE")
-    @test length(names) == 81
-    @test "Epoch" ∉ names
-end
-
 @testset "Datasets" begin
-    res = CDAWeb.get_datasets(; observatoryGroup = "ACE", instrumentType = "Magnetic Fields (space)")
-    @test length(res) > 0
-
     id = "AC_H2_MFI"
     res = CDAWeb.get_dataset(id)
     @test res.Id == id

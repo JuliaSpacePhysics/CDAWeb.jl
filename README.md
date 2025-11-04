@@ -24,6 +24,11 @@ Julia interface to NASA's CDAWeb RESTful services for accessing space physics da
 ```julia
 using CDAWeb
 
+# Get dataset description
+dataset = get_dataset("AC_H0_MFI")
+# Get dataset within the time range
+dataset = get_dataset("AC_H0_MFI", "2023-01-01", "2023-01-02")
+
 # Fetch variable data with automatic caching
 data = get_data("AC_H0_MFI", "BGSEc", "2023-01-01", "2023-01-02")
 

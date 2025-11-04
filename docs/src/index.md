@@ -4,6 +4,8 @@ CurrentModule = CDAWeb
 
 # CDAWeb
 
+[![DOI](https://zenodo.org/badge/1061976595.svg)](https://doi.org/10.5281/zenodo.17519096)
+
 Documentation for [CDAWeb](https://github.com/JuliaSpacePhysics/CDAWeb.jl).
 
 ## Installation
@@ -19,21 +21,42 @@ Pkg.add("CDAWeb")
 using CDAWeb
 using Dates
 
+# Get dataset description
+get_dataset("AC_H0_MFI")
+```
+
+```@example quick_example
+# Get dataset within the time range and display its attributes
+ds = get_dataset("AC_H0_MFI", "2023-01-01", "2023-01-02")
+ds.attrib
+```
+
+```@example quick_example
 # Fetch solar wind velocity data from OMNI dataset
 dataset = "OMNI_COHO1HR_MERGED_MAG_PLASMA"
 t0 = DateTime(2020, 1, 1) # Start time
 t1 = DateTime(2020, 1, 2) # End time    
-data = get_data(dataset,"V",t0,t1)
-# Data is automatically cached for faster subsequent access
+data = get_data(dataset, "V", t0, t1) # Data is automatically cached for faster subsequent access
 ```
 
 Retrieve the original monthly data files and clip to the exact requested time range.
 
 ```@example quick_example
-data = get_data(dataset,"V",t0,t1; orig = true, clip=true)
+data = get_data(dataset, "V", t0, t1; orig = true, clip=true)
 ```
 
 ## Additional Features
+
+### Get Metadata from Web Services
+
+Access metadata directly from CDAWeb's RESTful services:
+
+```@example quick_example
+# Get descriptions of the instrument types that are available from CDAS.
+instrument_types = get_instrument_types()
+```
+
+See also [`get_dataviews`](@ref), [`get_datasets`](@ref), [`get_instruments`](@ref), [`get_instrument_types`](@ref), [`get_observatories`](@ref), [`get_observatory_groups`](@ref), [`get_observatory_groups_and_instruments`](@ref), [`get_original_file_descs`](@ref), and [`get_data_file_descs`](@ref). These functions are convenience wrappers around the CDAS RESTful Web Services, closely matching the original API.
 
 ### Accessing Master CDF Metadata
 
@@ -53,15 +76,6 @@ Search for datasets matching a pattern:
 ```@example quick_example
 # Find all ACE H0 (high resolution) datasets
 find_datasets("AC_H0")
-```
-
-### Listing Data Files
-
-Get the list of CDF files for a specific dataset and variable within a time range:
-
-```@example quick_example
-# Returns URLs of data files covering the specified date range
-get_data_files("AC_H0_MFI", "BGSEc", "2023-01-01", "2023-01-02")
 ```
 
 ### Cache Management

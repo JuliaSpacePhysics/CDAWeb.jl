@@ -8,6 +8,7 @@ function _split_product(product::AbstractString)
 end
 
 _format_time(time) = Dates.format(time, "yyyymmddTHHMMSS") * "Z"
+_format_time(time::AbstractString) = _format_time(DateTime(time))
 
 function _build_request_url(dataset, variable, start_time, stop_time; format = "cdf")
     start_str = _format_time(start_time)
