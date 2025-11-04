@@ -12,7 +12,7 @@ function update_master_cdf(masters_url = master_url; verbose = false)
     response = HTTP.head(masters_url)
     last_modified = get(Dict(response.headers), "Last-Modified", "")
 
-    cache_file = joinpath(MASTERS_CDF_PATH, ".last_modified")
+    cache_file = MASTER_LAST_MODIFIED
     stored_last_modified = isfile(cache_file) ? read(cache_file, String) : nothing
     verbose && @info "Last modified: $last_modified"
     if stored_last_modified != last_modified
@@ -37,6 +37,7 @@ end
 
 function _find_master_cdf(name)
     _path = endswith(name, ".cdf") ? name : "$(lowercase(name))_00000000_v01.cdf"
+    ispath(MASTER_LAST_MODIFIED) || update_master_cdf()
     path = joinpath(MASTERS_CDF_PATH, _path)
     isfile(path) && return CDFDataset(path)
 

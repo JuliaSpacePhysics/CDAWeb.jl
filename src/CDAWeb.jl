@@ -11,10 +11,13 @@ using TypedTables: FlexTable
 using ResumableFunctions
 import CDFDatasets as CDF
 using CDFDatasets: ConcatCDFVariable, ConcatCDFDataset, var_type
-export get_dataviews, get_instruments, get_instrument_types, get_observatories, get_observatory_groups, get_observatory_groups_and_instruments, get_inventory
-export get_original_files
-export get_data, get_data_files
-export get_dataset, get_datasets, get_variables
+
+# RESTful API wrappers
+export get_dataviews, get_datasets, get_instruments, get_instrument_types
+export get_observatories, get_observatory_groups, get_observatory_groups_and_instruments
+export get_inventory, get_variables, get_original_file_descs, get_data_file_descs
+# Data access
+export get_data, get_dataset, get_data_files
 export clear_cache!
 export find_master_cdf
 export find_datasets
@@ -26,6 +29,7 @@ const SP_ENDPOINT = "$(CDAWEB_BASE_URL)/dataviews/sp_phys/datasets"
 const HEADER = ["Accept" => "application/json"]
 const BASE_PATH = joinpath(homedir(), ".cdaweb")
 const MASTERS_CDF_PATH = joinpath(BASE_PATH, "masters")
+const MASTER_LAST_MODIFIED = joinpath(MASTERS_CDF_PATH, ".last_modified")
 const DATA_CACHE_PATH = joinpath(BASE_PATH, "data")
 
 include("master.jl")

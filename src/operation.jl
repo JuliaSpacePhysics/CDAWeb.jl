@@ -9,9 +9,11 @@ function get_dataviews()
 end
 
 """
-    get_instrument_types()
+    get_instrument_types(; dataview = "sp_phys", query...)
 
 Get descriptions of the instrument types that are available from CDAS.
+
+See [Details](https://cdaweb.gsfc.nasa.gov/WebServices/REST/WebServices.html#Get_Instrument_Types) for available query parameters.
 """
 function get_instrument_types(; dataview = "sp_phys", query...)
     url = "$(ENDPOINT)/$(dataview)/instrumentTypes"
@@ -24,7 +26,7 @@ end
 
 Get descriptions of the instruments that are available from CDAS.
 
-See [Details](https://cdaweb.gsfc.nasa.gov/WebServices/REST/WebServices.html#Get_Instruments) for available query parameters (keyword arguments).
+See [Details](https://cdaweb.gsfc.nasa.gov/WebServices/REST/WebServices.html#Get_Instruments) for available query parameters.
 """
 function get_instruments(; dataview = "sp_phys", query...)
     url = "$(ENDPOINT)/$(dataview)/instruments"
@@ -37,7 +39,7 @@ end
 
 Get descriptions of the observatories that are available from CDAS. 
 
-See [Details](https://cdaweb.gsfc.nasa.gov/WebServices/REST/WebServices.html#Get_Observatories) for available query parameters (keyword arguments).
+See [Details](https://cdaweb.gsfc.nasa.gov/WebServices/REST/WebServices.html#Get_Observatories) for available query parameters.
 """
 function get_observatories(; dataview = "sp_phys", query...)
     url = "$(ENDPOINT)/$(dataview)/observatories"
@@ -50,7 +52,7 @@ end
 
 Get descriptions of the observatory groups that are available from CDAS.
 
-See [Details](https://cdaweb.gsfc.nasa.gov/WebServices/REST/WebServices.html#Get_Observatory_Groups) for available query parameters (keyword arguments).
+See [Details](https://cdaweb.gsfc.nasa.gov/WebServices/REST/WebServices.html#Get_Observatory_Groups) for available query parameters.
 """
 function get_observatory_groups(; dataview = "sp_phys", query...)
     url = "$(ENDPOINT)/$(dataview)/observatoryGroups"
@@ -65,7 +67,7 @@ Get descriptions of the observatory groups and instruments that are available fr
 
 This is a convenience/performance alternative to making multiple calls to Get Observatory Groups, Get Observatories, and Get Instruments.
 
-See [Details](https://cdaweb.gsfc.nasa.gov/WebServices/REST/WebServices.html#Get_Observatory_Groups_And_Instruments) for available query parameters (keyword arguments).
+See [Details](https://cdaweb.gsfc.nasa.gov/WebServices/REST/WebServices.html#Get_Observatory_Groups_And_Instruments) for available query parameters.
 """
 function get_observatory_groups_and_instruments(; dataview = "sp_phys", query...)
     url = "$(ENDPOINT)/$(dataview)/observatoryGroupsAndInstruments"
@@ -75,7 +77,7 @@ end
 
 # Get Inventory
 """
-    get_inventory(dataset, t0, t1)
+    get_inventory(dataset, t0, t1; dataview = "sp_phys")
 
 Get descriptions of the inventory that is available from CDAS.
 
@@ -94,6 +96,8 @@ end
     get_variables(dataset)
 
 Get descriptions of the variables that is available from the `dataset`.
+
+See [Get Variables](https://cdaweb.gsfc.nasa.gov/WebServices/REST/#Get_Variables) for more details.
 """
 function get_variables(dataset)
     url = "$(SP_ENDPOINT)/$(dataset)/variables"
@@ -116,7 +120,7 @@ end
 
 Get descriptions of the datasets that are available from CDAS.
 
-See [Get Datasets](https://cdaweb.gsfc.nasa.gov/WebServices/REST/#Get_Datasets) for available query parameters (keyword arguments).
+See [Get Datasets](https://cdaweb.gsfc.nasa.gov/WebServices/REST/#Get_Datasets) for available query parameters.
 """
 function get_datasets(; query...)
     response = HTTP.get(SP_ENDPOINT, HEADER; query)
@@ -124,40 +128,30 @@ function get_datasets(; query...)
 end
 
 """
-    get_dataset(id; kw...)
+    get_original_file_descs(id, start_time, stop_time; dataview = "sp_phys")
 
-Get the dataset description by `id`.
+Get descriptive information about original data files from the `id` dataset. 
 
-The value of `id` may be
-- CDAS (e.g., `AC_H2_MFI`),
-- DOI (e.g., `10.48322/fh85-fj47`),
-- SPASE ResourceID (e.g., `spase://NASA/NumericalData/ACE/MAG/L2/PT1H`).
+Original data files may lack updated meta-data and virtual variable values contained in files obtained from the other Get Data services.
 
+See also [`get_data_file_descs`](@ref).
 """
-get_dataset(id; kw...) = only(get_datasets(; id, kw...))
-
-"""
-    get_dataset(id, start_time, stop_time; kw...)
-
-Get the dataset by `id` between `start_time` and `stop_time`.
-
-If no dataset is available for the specified time range, the corresponding master dataset is returned.
-"""
-function get_dataset(id, start_time, stop_time; kw...)
-    file_paths = get_original_files(id, start_time, stop_time; kw...)
-    return !isempty(file_paths) ? ConcatCDFDataset(file_paths) : begin
-            @warn "No data available for $(id) in range $(start_time) to $(stop_time). Returning master CDF dataset."
-            find_master_cdf(id)
-        end
+function get_original_file_descs(id, t0, t1; dataview = "sp_phys")
+    url = "$(ENDPOINT)/$(dataview)/datasets/$(id)/orig_data/$(_format_time(t0)),$(_format_time(t1))"
+    response = HTTP.get(url, HEADER)
+    return JSON3.read(response.body).FileDescription
 end
 
 """
-    get_original_files(id, start_time, stop_time; kw...)
+    get_data_file_descs(dataset, variables, t0, t1; dataview = "sp_phys", format = "cdf", query...)
 
-Get original data files from the `id` dataset. 
+Get descriptive information about the specified data file for the `dataset`, `variables`.
 
-Original data files may lack updated meta-data and virtual variable values contained in files obtained from the other Get Data services. 
+See [Get Data](https://cdaweb.gsfc.nasa.gov/WebServices/REST/#Get_Data_GET) for more details.
 """
-function get_original_files(id, start_time, stop_time; kw...)
-    return _get_data_files(DateTime(start_time), DateTime(stop_time), id; kw...)
+function get_data_file_descs(dataset, variables, t0, t1; dataview = "sp_phys", format = "cdf", query...)
+    var_str = variables isa AbstractString ? variables : join(variables, ",")
+    url = "$(ENDPOINT)/$(dataview)/datasets/$(dataset)/data/$(_format_time(t0)),$(_format_time(t1))/$(var_str)"
+    response = HTTP.get(url, HEADER; query = (; format, query...))
+    return JSON3.read(response.body).FileDescription
 end
