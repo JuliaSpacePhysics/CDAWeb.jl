@@ -1,8 +1,3 @@
-const CDAWEB_BASE_URL = "https://cdaweb.gsfc.nasa.gov/WS/cdasr/1"
-const DATA_VIEWS_PATH = "dataviews/sp_phys/datasets"
-const ENDPOINT = "$(CDAWEB_BASE_URL)/$(DATA_VIEWS_PATH)"
-const HEADER = ["Accept" => "application/json"]
-
 function _split_product(product::AbstractString)
     parts = split(product, '/', limit = 2)
     @assert length(parts) == 2 "product should be of the form dataset/variable"
@@ -17,13 +12,13 @@ _format_time(time) = Dates.format(time, "yyyymmddTHHMMSS") * "Z"
 function _build_request_url(dataset, variable, start_time, stop_time; format = "cdf")
     start_str = _format_time(start_time)
     stop_str = _format_time(stop_time)
-    return "$(CDAWEB_BASE_URL)/$(DATA_VIEWS_PATH)/$(dataset)/data/$(start_str),$(stop_str)/$(variable)?format=$(format)"
+    return "$(SP_ENDPOINT)/$(dataset)/data/$(start_str),$(stop_str)/$(variable)?format=$(format)"
 end
 
 function _build_request_url(dataset, start_time, stop_time)
     start_str = _format_time(start_time)
     stop_str = _format_time(stop_time)
-    return "$(CDAWEB_BASE_URL)/$(DATA_VIEWS_PATH)/$(dataset)/orig_data/$(start_str),$(stop_str)/"
+    return "$(SP_ENDPOINT)/$(dataset)/orig_data/$(start_str),$(stop_str)/"
 end
 
 

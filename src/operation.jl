@@ -1,3 +1,92 @@
+"""
+    get_dataviews()
+
+Get descriptions of the dataviews that are available from CDAS.
+"""
+function get_dataviews()
+    response = HTTP.get(ENDPOINT, HEADER)
+    return JSON3.read(response.body).DataviewDescription
+end
+
+"""
+    get_instrument_types()
+
+Get descriptions of the instrument types that are available from CDAS.
+"""
+function get_instrument_types(; dataview = "sp_phys", query...)
+    url = "$(ENDPOINT)/$(dataview)/instrumentTypes"
+    response = HTTP.get(url, HEADER; query)
+    return JSON3.read(response.body).InstrumentTypeDescription
+end
+
+"""
+    get_instruments(; dataview = "sp_phys", query...)
+
+Get descriptions of the instruments that are available from CDAS.
+
+See [Details](https://cdaweb.gsfc.nasa.gov/WebServices/REST/WebServices.html#Get_Instruments) for available query parameters (keyword arguments).
+"""
+function get_instruments(; dataview = "sp_phys", query...)
+    url = "$(ENDPOINT)/$(dataview)/instruments"
+    response = HTTP.get(url, HEADER; query)
+    return JSON3.read(response.body).InstrumentDescription
+end
+
+"""
+    get_observatories(; dataview = "sp_phys", query...)
+
+Get descriptions of the observatories that are available from CDAS. 
+
+See [Details](https://cdaweb.gsfc.nasa.gov/WebServices/REST/WebServices.html#Get_Observatories) for available query parameters (keyword arguments).
+"""
+function get_observatories(; dataview = "sp_phys", query...)
+    url = "$(ENDPOINT)/$(dataview)/observatories"
+    response = HTTP.get(url, HEADER; query)
+    return JSON3.read(response.body).ObservatoryDescription
+end
+
+"""
+    get_observatory_groups(; dataview = "sp_phys", query...)
+
+Get descriptions of the observatory groups that are available from CDAS.
+
+See [Details](https://cdaweb.gsfc.nasa.gov/WebServices/REST/WebServices.html#Get_Observatory_Groups) for available query parameters (keyword arguments).
+"""
+function get_observatory_groups(; dataview = "sp_phys", query...)
+    url = "$(ENDPOINT)/$(dataview)/observatoryGroups"
+    response = HTTP.get(url, HEADER; query)
+    return JSON3.read(response.body).ObservatoryGroupDescription
+end
+
+"""
+    get_observatory_groups_and_instruments(; dataview = "sp_phys", query...)
+
+Get descriptions of the observatory groups and instruments that are available from CDAS.
+
+This is a convenience/performance alternative to making multiple calls to Get Observatory Groups, Get Observatories, and Get Instruments.
+
+See [Details](https://cdaweb.gsfc.nasa.gov/WebServices/REST/WebServices.html#Get_Observatory_Groups_And_Instruments) for available query parameters (keyword arguments).
+"""
+function get_observatory_groups_and_instruments(; dataview = "sp_phys", query...)
+    url = "$(ENDPOINT)/$(dataview)/observatoryGroupsAndInstruments"
+    response = HTTP.get(url, HEADER; query)
+    return JSON3.read(response.body).ObservatoryGroupInstrumentDescription
+end
+
+# Get Inventory
+"""
+    get_inventory(dataset, t0, t1)
+
+Get descriptions of the inventory that is available from CDAS.
+
+See [Details](https://cdaweb.gsfc.nasa.gov/WebServices/REST/WebServices.html#Get_Inventory).
+"""
+function get_inventory(dataset, t0, t1; dataview = "sp_phys")
+    url = "$(ENDPOINT)/$(dataview)/datasets/$(dataset)/inventory/$(_format_time(t0)),$(_format_time(t1))"
+    response = HTTP.get(url, HEADER)
+    return JSON3.read(response.body).InventoryDescription
+end
+
 # Get Variables
 # This service provides descriptions of the variables that is available from a dataset.  The following table describes the HTTP request and response.
 
@@ -7,7 +96,7 @@
 Get descriptions of the variables that is available from the `dataset`.
 """
 function get_variables(dataset)
-    url = "$(ENDPOINT)/$(dataset)/variables"
+    url = "$(SP_ENDPOINT)/$(dataset)/variables"
     response = HTTP.get(url, HEADER)
     return JSON3.read(response.body).VariableDescription
 end
@@ -30,7 +119,7 @@ Get descriptions of the datasets that are available from CDAS.
 See [Get Datasets](https://cdaweb.gsfc.nasa.gov/WebServices/REST/#Get_Datasets) for available query parameters (keyword arguments).
 """
 function get_datasets(; query...)
-    response = HTTP.get(ENDPOINT, HEADER; query)
+    response = HTTP.get(SP_ENDPOINT, HEADER; query)
     return JSON3.read(response.body).DatasetDescription
 end
 
@@ -55,7 +144,7 @@ Get the dataset by `id` between `start_time` and `stop_time`.
 If no dataset is available for the specified time range, the corresponding master dataset is returned.
 """
 function get_dataset(id, start_time, stop_time; kw...)
-    file_paths = get_original_data_files(id, start_time, stop_time; kw...)
+    file_paths = get_original_files(id, start_time, stop_time; kw...)
     return !isempty(file_paths) ? ConcatCDFDataset(file_paths) : begin
             @warn "No data available for $(id) in range $(start_time) to $(stop_time). Returning master CDF dataset."
             find_master_cdf(id)
@@ -63,12 +152,12 @@ function get_dataset(id, start_time, stop_time; kw...)
 end
 
 """
-    get_original_data_files(id, start_time, stop_time; kw...)
+    get_original_files(id, start_time, stop_time; kw...)
 
 Get original data files from the `id` dataset. 
 
 Original data files may lack updated meta-data and virtual variable values contained in files obtained from the other Get Data services. 
 """
-function get_original_data_files(id, start_time, stop_time; kw...)
+function get_original_files(id, start_time, stop_time; kw...)
     return _get_data_files(DateTime(start_time), DateTime(stop_time), id; kw...)
 end
