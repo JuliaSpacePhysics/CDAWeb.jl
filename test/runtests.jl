@@ -56,7 +56,7 @@ end
     variable = "V"
     @test collect(CDAWeb.split_into_fragments(t0, t1, Day(1))) == [(DateTime(2020, 1, i), DateTime(2020, 1, i + 1)) for i in 1:4]
 
-    CDAWeb.find_cached_and_missing("OMNI_COHO1HR_MERGED_MAG_PLASMA", "V", t0, t1, Day(1))
+    CDAWeb.find_cached_and_missing("OMNI_COHO1HR_MERGED_MAG_PLASMA", "V", t0, t1; fragment_period = Day(1))
 
     # Clear cache before test
     CDAWeb.clear_cache!("OMNI_COHO1HR_MERGED_MAG_PLASMA")
@@ -99,6 +99,9 @@ end
     res = CDAWeb.get_variables("WI_H1_SWE")
     @test length(res) == 81
     @test collect(keys(res[1])) == [:Name, :ShortDescription, :LongDescription]
+    names = CDAWeb.get_variable_names("WI_H1_SWE")
+    @test length(names) == 81
+    @test "Epoch" ∉ names
 end
 
 @testset "Datasets" begin
@@ -108,6 +111,9 @@ end
     id = "AC_H2_MFI"
     res = CDAWeb.get_dataset(id)
     @test res.Id == id
+
+    CDAWeb.get_dataset("OMNI_COHO1HR_MERGED_MAG_PLASMA", "2020-5-2", "2020-5-3")
+    dataset = CDAWeb.get_dataset("OMNI_COHO1HR_MERGED_MAG_PLASMA", "1900-1-1", "1900-1-2")
 end
 
 @testset "Empty dataset" begin

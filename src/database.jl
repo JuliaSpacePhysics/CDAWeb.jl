@@ -115,7 +115,7 @@ end
 
 
 """Update orig cache metadata in SQLite database (process-safe, atomic)."""
-function _update_orig_cache!(dataset, start_times, end_times, files)
+function _update_cache!(dataset, start_times, end_times, files)
     db = _get_cache_db(true)
     # DBInterface.execute(db, "BEGIN TRANSACTION")
 
@@ -150,7 +150,7 @@ function _update_orig_cache!(dataset, start_times, end_times, files)
 end
 
 """Update variable cache metadata in SQLite database (process-safe, atomic)."""
-function _update_variable_cache!(dataset, variable, start_times, end_times, files)
+function _update_cache!(dataset, variable, start_times, end_times, files)
     db = _get_cache_db(false)
     # DBInterface.execute(db, "BEGIN TRANSACTION")
 

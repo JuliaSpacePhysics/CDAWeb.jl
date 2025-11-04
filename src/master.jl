@@ -35,8 +35,7 @@ function build_master_cdf_index()
     return Dict(zip(names, files))
 end
 
-
-function find_master_cdf(name)
+function _find_master_cdf(name)
     _path = endswith(name, ".cdf") ? name : "$(lowercase(name))_00000000_v01.cdf"
     path = joinpath(MASTERS_CDF_PATH, _path)
     isfile(path) && return CDFDataset(path)
@@ -47,8 +46,13 @@ function find_master_cdf(name)
     if length(files) == 1
         return CDFDataset(joinpath(MASTERS_CDF_PATH, first(files)))
     elseif isempty(files)
-        throw(ArgumentError("No master CDF matches $(name) in $(MASTERS_CDF_PATH)"))
+        return nothing
     else
         throw(ArgumentError("Multiple master CDFs match $(name): $(files). Please specify more precisely."))
     end
+end
+
+function find_master_cdf(name)
+    file = _find_master_cdf(name)
+    return !isnothing(file) ? file : throw(ArgumentError("No master CDF matches $(name) in $(MASTERS_CDF_PATH)"))
 end
