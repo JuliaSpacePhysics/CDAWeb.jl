@@ -33,7 +33,7 @@ end
     dataset = CDFDataset(file)
     t0 = typemax(DateTime)
     t1 = typemin(DateTime)
-    for var in dataset
+    for (key, var) in dataset
         isempty(var) && continue
         eltype(var) <: Dates.AbstractDateTime || continue
         t0 = min(t0, DateTime(var[1]))
