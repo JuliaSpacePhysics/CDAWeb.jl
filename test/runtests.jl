@@ -71,6 +71,8 @@ end
     t_start = DateTime(2020, 1, 1)
     t_stop = DateTime(2020, 1, 1, 1)
 
+    dataset = CDAWeb.get_data("PSP_SWP_SPI_SF00_L3_MOM", t_start, t_stop)
+    @test "DENS" in keys(dataset)
     dens = CDAWeb.get_data("PSP_SWP_SPI_SF00_L3_MOM", "DENS", t_start, t_stop)
     @test dens isa AbstractCDFVariable
     @test CommonDataModel.name(dens) == "DENS"

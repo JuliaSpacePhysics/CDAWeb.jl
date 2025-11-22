@@ -19,19 +19,19 @@ function no_data_available(data)
     end
 end
 
-function _get_file_urls_from_api(args...; kw...)
+function _get_file_urls_from_api(args...; status_exception = false, kw...)
     url = _build_request_url(args...; kw...)
     @debug "Requesting data from CDAWeb: $(url)"
     # Set headers to request JSON response
-    response = HTTP.get(url, HEADER; status_exception = false)
-
+    response = HTTP.get(url, HEADER; status_exception)
     data = JSON3.read(response.body)
     return if haskey(data, :FileDescription)
         (desc.Name for desc in data.FileDescription)
     elseif no_data_available(data)
         String[]
     else
-        throw(HTTP.HTTPException(response))
+        # try again
+        _get_file_urls_from_api(args...; status_exception = true, kw...)
     end
 end
 

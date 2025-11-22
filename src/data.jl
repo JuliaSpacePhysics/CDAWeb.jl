@@ -1,12 +1,3 @@
-function _split_product(product::AbstractString)
-    parts = split(product, '/', limit = 2)
-    @assert length(parts) == 2 "product should be of the form dataset/variable"
-    dataset, variable = String(parts[1]), String(parts[2])
-    @assert !isempty(dataset) "dataset name cannot be empty"
-    @assert !isempty(variable) "variable name cannot be empty"
-    return dataset, variable
-end
-
 _format_time(time) = Dates.format(time, "yyyymmddTHHMMSS") * "Z"
 _format_time(time::AbstractString) = _format_time(DateTime(time))
 
@@ -72,8 +63,16 @@ function get_data(dataset, variable, start_time, stop_time; clip = false, master
 end
 
 function get_data(product::AbstractString, start_time, stop_time; kw...)
-    dataset, variable = _split_product(product)
-    return get_data(dataset, variable, start_time, stop_time; kw...)
+    parts = split(product, '/', limit = 2)
+    @assert length(parts) <= 2 "product should be of the form <dataset> or <dataset>/<variable>"
+    if length(parts) == 1
+        return get_dataset(product, start_time, stop_time; kw...)
+    else
+        dataset, variable = String(dataset), String(variable)
+        @assert !isempty(dataset) "dataset name cannot be empty"
+        @assert !isempty(variable) "variable name cannot be empty"
+        return get_data(dataset, variable, start_time, stop_time; kw...)
+    end
 end
 
 
