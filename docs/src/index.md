@@ -27,7 +27,7 @@ get_dataset("AC_H0_MFI")
 
 ```@example quick_example
 # Get dataset within the time range and display its attributes
-ds = get_dataset("AC_H0_MFI", "2023-01-01", "2023-01-02")
+ds = get_data("AC_H0_MFI", "2023-01-01", "2023-01-02")
 ds.attrib
 ```
 
