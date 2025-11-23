@@ -86,7 +86,7 @@ end
 end
 
 @testset "Error handling" begin
-    @test_throws AssertionError CDAWeb.get_data("invalid_format", DateTime(2020, 1, 1), DateTime(2020, 1, 2))
+    @test_throws ArgumentError CDAWeb.get_data("invalid_format", DateTime(2020, 1, 1), DateTime(2020, 1, 2))
     @test_throws AssertionError CDAWeb.get_data("/DENS", DateTime(2020, 1, 1), DateTime(2020, 1, 2))
     @test_throws AssertionError CDAWeb.get_data("DATASET/", DateTime(2020, 1, 1), DateTime(2020, 1, 2))
 end

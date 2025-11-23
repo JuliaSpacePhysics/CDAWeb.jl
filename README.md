@@ -2,6 +2,7 @@
 
 [![DOI](https://zenodo.org/badge/1061976595.svg)](https://doi.org/10.5281/zenodo.17519096)
 
+[![version](https://juliahub.com/docs/General/CDAWeb/stable/version.svg)](https://juliahub.com/ui/Packages/General/CDAWeb)
 [![Build Status](https://github.com/JuliaSpacePhysics/CDAWeb.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/JuliaSpacePhysics/CDAWeb.jl/actions/workflows/CI.yml?query=branch%3Amain)
 [![Coverage](https://codecov.io/gh/JuliaSpacePhysics/CDAWeb.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/JuliaSpacePhysics/CDAWeb.jl)
 
@@ -9,7 +10,7 @@ Julia interface to NASA's CDAWeb RESTful services for accessing space physics da
 
 **Installation**: at the Julia REPL, run `using Pkg; Pkg.add("CDAWeb")`
 
-**Documentation**: [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://JuliaSpacePhysics.github.io/CDAWeb.jl/dev/)
+**Documentation**: [![Dev](https://img.shields.io/badge/docs-dev-blue.svg?logo=julia)](https://JuliaSpacePhysics.github.io/CDAWeb.jl/dev/)
 
 ## Features
 

@@ -30,7 +30,7 @@ function _get_file_urls_from_api(args...; status_exception = false, kw...)
     elseif no_data_available(data)
         String[]
     else
-        # try again
+        # try again and set status_exception to true to throw an error
         _get_file_urls_from_api(args...; status_exception = true, kw...)
     end
 end
@@ -115,7 +115,18 @@ function find_cached_and_missing(dataset, variable, start_time, stop_time; fragm
     return collect(cached_files), missings
 end
 
-function get_data_files(dataset, variable, t0, t1; orig = false, fragment_period = Hour(24), kw...)
+"""
+    get_data_files(dataset, variable, t0, t1; kw...)
+
+Get data file paths for a dataset (variable) within time range (t0, t1). 
+
+If files are not available in cache, they will be fetched and cached.
+
+By default, we return original files. Set keyword argument `orig=false` or `fragment_period` to get files processed by CDAWeb's web service (usually this is slower and not suitable when needing multiple variables).
+"""
+function get_data_files(dataset, variable, t0, t1; orig = nothing, fragment_period = nothing, kw...)
+    orig = @something orig isnothing(fragment_period)
+    fragment_period = @something fragment_period Hour(24)
     return orig ? _get_data_files(t0, t1, dataset; kw...) : _get_data_files(t0, t1, dataset, variable; find_options = (; fragment_period), kw...)
 end
 
