@@ -42,7 +42,7 @@ data = get_data(dataset, "V", t0, t1) # Data is automatically cached for faster 
 Retrieve the original monthly data files and clip to the exact requested time range.
 
 ```@example quick_example
-data = get_data(dataset, "V", t0, t1; orig = true, clip=true)
+data = get_data(dataset, "V", t0, t1; orig = true, clip = true)
 ```
 
 ## Additional Features

@@ -27,16 +27,23 @@ end
 # https://github.com/SciQLop/PyISTP/blob/main/pyistp/_impl.py#L16
 
 """
-Fetch data for a dataset variable within a time range.
+    get_data(dataset, [variable,] t0, t1; clip = false, master_attributes = false, kw...)
+    get_data(path, t0, t1; clip = false, master_attributes = false, kw...)
+
+Fetch data for a dataset (variable) within a time range (t0, t1).
+
+A `path`-like format `<dataset>/<variable>` can also be used to specify the dataset and variable.
 
 Set `master_attributes=true` to use master CDF attributes.
 Set `clip=true` to restrict data to exact time bounds.
 
 See `get_data_files` for caching options.
 """
-function get_data(dataset, variable, start_time, stop_time; clip = false, master_attributes = false, kw...)
-    start_time = DateTime(start_time)
-    stop_time = DateTime(stop_time)
+function get_data end
+
+function get_data(dataset, variable, t0, t1; clip = false, master_attributes = false, kw...)
+    start_time = DateTime(t0)
+    stop_time = DateTime(t1)
     file_paths = get_data_files(dataset, variable, start_time, stop_time; kw...)
 
     # Handle case where no data files are available (e.g., 404 error)
@@ -54,21 +61,16 @@ function get_data(dataset, variable, start_time, stop_time; clip = false, master
             # CDF.CommonDataFormat.vattrib(master_cdf.source, num)
         end
     var = ConcatCDFVariable(arrays; metadata)
-    return if clip
-        indices = CDFDatasets.find_indices(var, start_time, stop_time)
-        selectdim(var, ndims(var), indices)
-    else
-        var
-    end
+    return clip ? var[start_time .. stop_time] : var
 end
 
-function get_data(product::AbstractString, start_time, stop_time; kw...)
-    parts = split(product, '/', limit = 2)
-    @assert length(parts) <= 2 "product should be of the form <dataset> or <dataset>/<variable>"
+function get_data(path::AbstractString, start_time, stop_time; kw...)
+    parts = split(path, '/', limit = 2)
+    @assert length(parts) <= 2 "Path should be of the form <dataset> or <dataset>/<variable>"
     if length(parts) == 1
-        return get_dataset(product, start_time, stop_time; kw...)
+        return get_dataset(path, start_time, stop_time; kw...)
     else
-        dataset, variable = String(dataset), String(variable)
+        dataset, variable = String(parts[1]), String(parts[2])
         @assert !isempty(dataset) "dataset name cannot be empty"
         @assert !isempty(variable) "variable name cannot be empty"
         return get_data(dataset, variable, start_time, stop_time; kw...)
