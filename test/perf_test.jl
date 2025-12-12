@@ -7,7 +7,7 @@ julia> @b CDAWeb.get_data("AC_H0_MFI/BGSEc", "2023-01-01", "2023-01-02")
 
 @b CDAWeb.get_data("AC_H0_MFI/BGSEc", "2023-01-01", "2023-01-02T01")
 # 49.083 μs (383 allocs: 17.156 KiB)
-@b CDAWeb.get_data("AC_H0_MFI/BGSEc", "2023-01-01", "2023-01-02T01"; orig=true)
+@b CDAWeb.get_data("AC_H0_MFI", "2023-01-01", "2023-01-02T01")["BGSEc"]
 # 49.250 μs (346 allocs: 16.562 KiB)
 
 # julia> @b CDAWeb.get_data("AC_H0_MFI/BGSEc", "2023-01-01", "2023-01-02")

@@ -19,6 +19,19 @@ function no_data_available(data)
     end
 end
 
+function _build_request_url(dataset, variable, start_time, stop_time; format = "cdf")
+    start_str = _format_time(start_time)
+    stop_str = _format_time(stop_time)
+    return "$(SP_ENDPOINT)/$(dataset)/data/$(start_str),$(stop_str)/$(variable)?format=$(format)"
+end
+
+function _build_request_url(dataset, start_time, stop_time)
+    start_str = _format_time(start_time)
+    stop_str = _format_time(stop_time)
+    return "$(SP_ENDPOINT)/$(dataset)/orig_data/$(start_str),$(stop_str)/"
+end
+
+
 function _get_file_urls_from_api(args...; status_exception = false, kw...)
     url = _build_request_url(args...; kw...)
     @debug "Requesting data from CDAWeb: $(url)"
@@ -116,31 +129,26 @@ function find_cached_and_missing(dataset, variable, start_time, stop_time; fragm
 end
 
 """
-    get_data_files(dataset, variable, t0, t1; kw...)
+    get_data_files(dataset, t0, t1; kw...)
 
-Get data file paths for a dataset (variable) within time range (t0, t1). 
+Get original data file paths for a dataset within time range (t0, t1). 
 
 If files are not available in cache, they will be fetched and cached.
-
-By default, we return original files. Set keyword argument `orig=false` or `fragment_period` to get files processed by CDAWeb's web service (usually this is slower and not suitable when needing multiple variables).
 """
-function get_data_files(dataset, variable, t0, t1; orig = nothing, fragment_period = nothing, kw...)
-    orig = @something orig isnothing(fragment_period)
-    fragment_period = @something fragment_period Hour(24)
-    return orig ? _get_data_files(t0, t1, dataset; kw...) : _get_data_files(t0, t1, dataset, variable; find_options = (; fragment_period), kw...)
+get_data_files(dataset, t0, t1; kw...) = _get_data_files(t0, t1, dataset; kw...)
+
+"""
+    get_data_files(dataset, variables, t0, t1; fragment_period = Hour(24), kw...)
+
+Get processed data file paths for a dataset + variables within time range (t0, t1). 
+
+Note: usually this is slower and not suitable when needing multiple variables due to CDAWeb's web service processing overhead.
+"""
+function get_data_files(dataset, variables, t0, t1; fragment_period = Hour(24), kw...)
+    return _get_data_files(t0, t1, dataset, variables; find_options = (; fragment_period), kw...)
 end
 
-"""
-    get_original_files(id, start_time, stop_time; kw...)
-
-Get original data file paths from the `id` dataset. 
-"""
-get_original_files(id, start_time, stop_time; kw...) = _get_data_files(start_time, stop_time, id; kw...)
-
-
 function _get_data_files(start_time, stop_time, dataset, args...; disable_cache = false, find_options = (;), kw...)
-    start_time = DateTime(start_time)
-    stop_time = DateTime(stop_time)
     dataset = any(islowercase, dataset) ? uppercase(dataset) : dataset
     if disable_cache
         return _fetch_and_cache_files!(start_time, stop_time, dataset, args...; disable_cache, kw...)

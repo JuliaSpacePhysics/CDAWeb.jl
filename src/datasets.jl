@@ -36,7 +36,7 @@ function get_dataset(id, start_time, stop_time; clip = false, kw...)
     t1 = DateTime(stop_time)
     file_paths = _get_data_files(t0, t1, id; kw...)
     return if !isempty(file_paths)
-        ds = ConcatCDFDataset(file_paths)
+        ds = cdfopen(file_paths)
         clip ? view(ds, t0 .. t1) : ds
     else
         @warn "No data available for $(id) in range $(t0) to $(t1). Returning master CDF dataset."
