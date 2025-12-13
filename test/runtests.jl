@@ -62,8 +62,8 @@ end
 using DimensionalData
 
 @testset "Concatenation" begin
-    data = CDAWeb.get_data("OMNI_COHO1HR_MERGED_MAG_PLASMA", "V", DateTime(2020, 5, 2), DateTime(2020, 6, 7); orig = true)
-    DimArray(CDAWeb.get_data("OMNI_COHO1HR_MERGED_MAG_PLASMA", "V", DateTime(2020, 5, 2), DateTime(2020, 6, 7); orig = true))
+    data = CDAWeb.get_data("OMNI_COHO1HR_MERGED_MAG_PLASMA", DateTime(2020, 5, 2), DateTime(2020, 6, 7))["V"]
+    DimArray(data)
     # 80.709 μs (382 allocs: 57.938 KiB)
 end
 
@@ -96,13 +96,12 @@ end
     t0 = DateTime(2020, 1, 1, 2)
     t1 = DateTime(2020, 1, 4, 3)
     dataset = "OMNI_COHO1HR_MERGED_MAG_PLASMA"
-    variable = "V"
     @test collect(CDAWeb.split_into_fragments(t0, t1, Day(1))) == [(DateTime(2020, 1, i), DateTime(2020, 1, i + 1)) for i in 1:4]
 
-    CDAWeb.find_cached_and_missing("OMNI_COHO1HR_MERGED_MAG_PLASMA", "V", t0, t1; fragment_period = Day(1))
+    CDAWeb.find_cached_and_missing(dataset, "V", t0, t1; fragment_period = Day(1))
 
     # Clear cache before test
-    CDAWeb.clear_cache!("OMNI_COHO1HR_MERGED_MAG_PLASMA")
+    CDAWeb.clear_cache!(dataset)
 
     # First request - should fetch from API
     data1 = CDAWeb.get_data_files(
@@ -144,12 +143,22 @@ end
     @test res.Id == id
 
     CDAWeb.get_dataset("OMNI_COHO1HR_MERGED_MAG_PLASMA", "2020-5-2", "2020-5-3")
-    dataset = CDAWeb.get_dataset("OMNI_COHO1HR_MERGED_MAG_PLASMA", "1900-1-1", "1900-1-2")
+    CDAWeb.get_dataset("OMNI_COHO1HR_MERGED_MAG_PLASMA", "1900-1-1", "1900-1-2")
+end
+
+@testset "Dataset clipping" begin
+    t0 = DateTime(2020, 5, 2)
+    t1 = DateTime(2020, 5, 3)
+    ds_full = get_dataset("OMNI_COHO1HR_MERGED_MAG_PLASMA", t0, t1; clip = false)
+    ds_clipped = get_dataset("OMNI_COHO1HR_MERGED_MAG_PLASMA", t0, t1; clip = true)
+    @test ds_full.attrib == ds_clipped.attrib
+    ds_full["Epoch"] |> Array
+    ds_clipped["Epoch"] |> Array
 end
 
 @testset "Empty dataset" begin
     t0 = DateTime(2021, 8, 8)
     t1 = DateTime(2021, 8, 9)
     @test get_data("WI_H1_SWE", "Proton_Np_nonlin", t0, t1) isa AbstractCDFVariable
-    @test get_data("WI_H1_SWE", "Proton_Np_nonlin", t0, t1; orig = true) isa AbstractCDFVariable
+    @test get_data("WI_H1_SWE", "Proton_Np_nonlin", t0, t1) isa AbstractCDFVariable
 end

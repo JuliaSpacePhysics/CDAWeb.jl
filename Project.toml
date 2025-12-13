@@ -19,7 +19,7 @@ Tar = "a4e569a6-e804-4fa4-b0f3-eef7a1d5b13e"
 TypedTables = "9d95f2ec-7b3d-5a63-8d20-e2491e220bb9"
 
 [compat]
-CDFDatasets = "0.1.7"
+CDFDatasets = "0.1.11"
 DBInterface = "2"
 Dates = "1"
 Downloads = "1"
