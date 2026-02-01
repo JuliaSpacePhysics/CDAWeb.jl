@@ -5,8 +5,9 @@ _format_time(time::AbstractString) = _format_time(DateTime(time))
 
 """
     get_data(dataset, variable)
-    get_data(dataset, [variable,] t0, t1; clip = false, master_attributes = false, kw...)
-    get_data(path, t0, t1; clip = false, master_attributes = false, kw...)
+    get_data(dataset, t0, t1; clip = false, master_attributes = false)
+    get_data(dataset, variable, t0, t1; direct = true, kw...)
+    get_data(path, t0, t1; kw...)
 
 Fetch data for a dataset (variable) within a time range (t0, t1).
 
@@ -16,12 +17,21 @@ A `path`-like format `<dataset>/<variable>` can also be used to specify the data
 
 Set `master_attributes=true` to use master CDF attributes.
 Set `clip=true` to restrict data to exact time bounds.
+Set `direct=false` to fetch the entire dataset first, then index into it.
 
 See [`get_data_files`](@ref) for caching options.
 """
 function get_data end
 
-function get_data(dataset, var, t0, t1; clip = false, master_attributes = false, kw...)
+function get_data(dataset, var, t0, t1; direct = true, kw...)
+    return if direct
+        _get_data(dataset, var, t0, t1; kw...)
+    else
+        get_dataset(dataset, t0, t1; kw...)[var]
+    end
+end
+
+function _get_data(dataset, var, t0, t1; clip = false, master_attributes = false, kw...)
     start_time = DateTime(t0)
     stop_time = DateTime(t1)
     file_paths = get_data_files(dataset, var, start_time, stop_time; kw...)
@@ -44,7 +54,7 @@ function get_data(dataset, var, t0, t1; clip = false, master_attributes = false,
     return clip ? data[start_time .. stop_time] : data
 end
 
-function get_data(path::AbstractString, start_time, stop_time; kw...)
+function get_data(path::AbstractString, start_time, stop_time; direct = true, kw...)
     parts = split(path, '/', limit = 2)
     @assert length(parts) <= 2 "Path should be of the form <dataset> or <dataset>/<variable>"
     return if length(parts) == 1
@@ -53,7 +63,7 @@ function get_data(path::AbstractString, start_time, stop_time; kw...)
         dataset, variable = String(parts[1]), String(parts[2])
         @assert !isempty(dataset) "dataset name cannot be empty"
         @assert !isempty(variable) "variable name cannot be empty"
-        get_data(dataset, variable, start_time, stop_time; kw...)
+        get_data(dataset, variable, start_time, stop_time; direct, kw...)
     end
 end
 
