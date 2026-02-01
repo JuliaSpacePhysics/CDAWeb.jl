@@ -21,6 +21,7 @@ export get_data, get_dataset, get_data_files
 export clear_cache!
 export find_master_cdf
 export find_datasets
+export @cda_str
 
 const master_url = "https://spdf.gsfc.nasa.gov/pub/software/cdawlib/0MASTERS/master.tar"
 const CDAWEB_BASE_URL = "https://cdaweb.gsfc.nasa.gov/WS/cdasr/1"
@@ -41,6 +42,7 @@ include("database.jl")
 include("datasets.jl")
 include("initialization.jl")
 include("precompile.jl")
+include("types.jl")
 
 """Get cache metadata"""
 function cache_metadata(orig::Bool = false)

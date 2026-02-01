@@ -85,6 +85,23 @@ end
     @test isempty(CDAWeb.get_data("PSP_SWP_SPI_SF00_L3_MOM/DENS", DateTime(1990, 1, 1), DateTime(1990, 1, 1, 1)))
 end
 
+@testset "cda_str macro" begin
+    # Test single parameter
+    using Dates
+    t0 = DateTime(2020, 1, 1, 2)
+    t1 = DateTime(2020, 1, 4, 3)
+    ds_spec = cda"OMNI_COHO1HR_MERGED_MAG_PLASMA"
+    ds = ds_spec(t0, t1)
+    @test ds["Epoch"][1] == t0
+    # Test multiple parameters with spaces
+    products_spaces = cda"OMNI_COHO1HR_MERGED_MAG_PLASMA/BR, N , T"
+    @test length(products_spaces) == 3
+    @test length(products_spaces(t0, t1)) == 3
+    @test products_spaces[1](t0, t1) |> length == 74
+    # Test error case - invalid format
+    @test_throws Exception eval(:(cda"invalid_format,param"))
+end
+
 @testset "Error handling" begin
     @test_throws ArgumentError CDAWeb.get_data("invalid_format", DateTime(2020, 1, 1), DateTime(2020, 1, 2))
     @test_throws AssertionError CDAWeb.get_data("/DENS", DateTime(2020, 1, 1), DateTime(2020, 1, 2))
