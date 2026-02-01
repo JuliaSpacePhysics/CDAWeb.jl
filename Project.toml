@@ -1,6 +1,6 @@
 name = "CDAWeb"
 uuid = "950ff2a9-823f-469c-91a7-754a5d85edca"
-version = "0.2.0"
+version = "0.2.1"
 authors = ["Beforerr <zzj956959688@gmail.com> and contributors"]
 
 [workspace]
