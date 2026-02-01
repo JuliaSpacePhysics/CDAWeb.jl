@@ -5,8 +5,9 @@ CurrentModule = CDAWeb
 # CDAWeb
 
 [![DOI](https://zenodo.org/badge/1061976595.svg)](https://doi.org/10.5281/zenodo.17519096)
+[![version](https://juliahub.com/docs/General/CDAWeb/stable/version.svg)](https://juliahub.com/ui/Packages/General/CDAWeb)
 
-Documentation for [CDAWeb](https://github.com/JuliaSpacePhysics/CDAWeb.jl).
+Julia interface to NASA's [Coordinated Data Analysis Web](https://cdaweb.gsfc.nasa.gov/) (CDAWeb) for accessing space physics data.
 
 ## Installation
 
