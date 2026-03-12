@@ -163,6 +163,30 @@ end
     CDAWeb.get_dataset("OMNI_COHO1HR_MERGED_MAG_PLASMA", "1900-1-1", "1900-1-2")
 end
 
+@testset "Metadata queries" begin
+    @testset "get_observatory_info" begin
+        info = get_observatory_info("ACE")
+        @test length(info.observatories) > 0
+        @test length(info.datasets) > 0
+        # Each observatory has a Name field
+        @test haskey(info.observatories[1], :Name)
+        # Each dataset has an Id field
+        @test haskey(info.datasets[1], :Id)
+        # All datasets belong to ACE observatory group
+        @test all(ds -> ds.ObservatoryGroup == "ACE", info.datasets)
+    end
+
+    @testset "get_dataset_info" begin
+        info = get_dataset_info("AC_H2_MFI")
+        @test info.dataset.Id == "AC_H2_MFI"
+        @test length(info.variables) > 0
+        # Each variable has Name, ShortDescription, LongDescription
+        @test haskey(info.variables[1], :Name)
+        @test haskey(info.variables[1], :ShortDescription)
+        @test haskey(info.variables[1], :LongDescription)
+    end
+end
+
 @testset "Dataset clipping" begin
     t0 = DateTime(2020, 5, 2)
     t1 = DateTime(2020, 5, 3)

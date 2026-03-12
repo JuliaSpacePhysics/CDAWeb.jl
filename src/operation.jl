@@ -128,6 +128,35 @@ function get_datasets(; query...)
 end
 
 """
+    get_observatory_info(name; dataview = "sp_phys")
+
+Get comprehensive metadata about an observatory (group), including all
+associated datasets.
+
+`name` is the observatory group name (e.g., `"ACE"`, `"Wind"`, `"PSP"`).
+
+Returns a `NamedTuple` with fields:
+- `observatories`: observatory descriptions within the group
+- `datasets`: all datasets associated with the observatory group
+
+# Examples
+```julia
+info = get_observatory_info("ACE")
+println(length(info.datasets), " datasets")
+for ds in info.datasets
+    println(ds.Id, ": ", ds.Label)
+end
+```
+
+See also [`get_observatories`](@ref), [`get_datasets`](@ref).
+"""
+function get_observatory_info(name; dataview = "sp_phys")
+    observatories = get_observatories(; dataview, observatoryGroup = name)
+    datasets = get_datasets(; observatoryGroup = name)
+    return (; observatories, datasets)
+end
+
+"""
     get_original_file_descs(id, start_time, stop_time; dataview = "sp_phys")
 
 Get descriptive information about original data files from the `id` dataset. 

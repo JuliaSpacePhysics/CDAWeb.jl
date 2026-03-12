@@ -16,6 +16,8 @@ using CDFDatasets: var_type, variable, cdfopen
 export get_dataviews, get_datasets, get_instruments, get_instrument_types
 export get_observatories, get_observatory_groups, get_observatory_groups_and_instruments
 export get_inventory, get_variables, get_original_file_descs, get_data_file_descs
+# Metadata queries
+export get_observatory_info, get_dataset_info
 # Data access
 export get_data, get_dataset, get_data_files
 export clear_cache!

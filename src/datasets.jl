@@ -43,3 +43,31 @@ function get_dataset(id, start_time, stop_time; clip = false, kw...)
         find_master_cdf(id)
     end
 end
+
+"""
+    get_dataset_info(id)
+
+Get comprehensive metadata about a dataset, including its description and all
+available variables.
+
+Returns a `NamedTuple` with fields:
+- `dataset`: the dataset description (Id, Label, Notes, Start, End, Instrument, etc.)
+- `variables`: descriptions of all variables in the dataset (Name, ShortDescription, LongDescription)
+
+# Examples
+```julia
+info = get_dataset_info("AC_H2_MFI")
+println(info.dataset.Label)
+println(length(info.variables), " variables")
+for v in info.variables
+    println(v.Name, ": ", v.ShortDescription)
+end
+```
+
+See also [`get_dataset`](@ref), [`get_variables`](@ref).
+"""
+function get_dataset_info(id)
+    dataset = get_dataset(id)
+    variables = get_variables(id)
+    return (; dataset, variables)
+end
