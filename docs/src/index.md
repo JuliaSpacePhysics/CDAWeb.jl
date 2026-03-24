@@ -16,6 +16,12 @@ using Pkg
 Pkg.add("CDAWeb")
 ```
 
+An [agent skill](https://agentskills.io) is included for exploring CDAWeb using natural language. To install it using [`skills`](https://github.com/vercel-labs/skills), run:
+
+```sh
+npx skills add JuliaSpacePhysics/CDAWeb.jl
+```
+
 ## Quick Example
 
 ```@example quick_example

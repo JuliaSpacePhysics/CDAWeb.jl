@@ -1,0 +1,65 @@
+{
+  "skill_name": "cdaweb-metadata",
+  "evals": [
+    {
+      "id": 0,
+      "prompt": "What are the electron flux variables available in the THEMIS-D SST dataset? I need to know the exact variable names to pass to get_data().",
+      "expected_output": "Dataset ID THD_L2_SST identified; electron flux variables listed with names like thd_psef_en_eflux and thd_pseb_en_eflux, with descriptions of full vs burst mode and quality suffix variants.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "correct-dataset-id",
+          "description": "Output contains the exact dataset ID THD_L2_SST"
+        },
+        {
+          "name": "electron-flux-variable-named",
+          "description": "Output contains at least one exact variable name for electron energy flux (e.g. thd_psef_en_eflux or thd_pseb_en_eflux)"
+        },
+        {
+          "name": "mode-distinction-mentioned",
+          "description": "Output distinguishes between full mode and burst mode variables (psef vs pseb)"
+        },
+        {
+          "name": "get-data-hint",
+          "description": "Output provides actionable guidance on which variable name(s) to pass to get_data()"
+        }
+      ]
+    },
+    {
+      "id": 1,
+      "prompt": "I'm looking for MMS FPI electron datasets on CDAWeb. What datasets are available and what variables do they have for electron number density?",
+      "expected_output": "MMS FPI datasets found (e.g. MMS1_FPI_FAST_L2_DES-MOMS or similar); electron density variable identified with its exact name.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "mms-dataset-id-found",
+          "description": "Output contains at least one MMS FPI dataset ID (should contain MMS and FPI)"
+        },
+        {
+          "name": "electron-density-variable-named",
+          "description": "Output contains an exact variable name for electron number density"
+        },
+        {
+          "name": "multiple-spacecraft-noted",
+          "description": "Output acknowledges MMS has multiple spacecraft (MMS1-4) or lists datasets for more than one"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Find me all WIND spacecraft datasets that have magnetic field data, and tell me what the B-field variable names are.",
+      "expected_output": "WIND magnetic field datasets found (e.g. WI_H0_MFI); variable names for the magnetic field components listed.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "wind-mfi-dataset-found",
+          "description": "Output contains at least one WIND MFI dataset ID (should match WI_*_MFI pattern)"
+        },
+        {
+          "name": "bfield-variable-named",
+          "description": "Output contains at least one exact B-field variable name from the dataset"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__julia__julia_eval",
+      "WebFetch(domain:cdaweb.gsfc.nasa.gov)"
+    ]
+  }
+}

@@ -1,8 +1,7 @@
 # Internal function to read data from CDAS
 function _cdas_read(key; dataview = "sp_phys", query...)
     url = "$(ENDPOINT)/$(dataview)/$(key)"
-    resp = HTTP.get(url, HEADER; query)
-    return _json_read1(resp)
+    return get_cached_json(url; use_cache = isempty(query), query...)
 end
 
 """
@@ -15,7 +14,7 @@ get_dataviews() = get_cached_json(ENDPOINT)
 """
     get_instrument_types(; query...)
 
-Get descriptions of available instrument types.
+Get available instrument types.
 
 See [Details](https://cdaweb.gsfc.nasa.gov/WebServices/REST/WebServices.html#Get_Instrument_Types) for available query parameters.
 """
@@ -59,7 +58,6 @@ See [Details](https://cdaweb.gsfc.nasa.gov/WebServices/REST/WebServices.html#Get
 """
 get_observatory_groups_and_instruments(; query...) = _cdas_read("observatoryGroupsAndInstruments"; query...)
 
-# Get Inventory
 """
     get_inventory(dataset, t0, t1; dataview = "sp_phys")
 
@@ -73,16 +71,13 @@ function get_inventory(dataset, t0, t1; dataview = "sp_phys")
 end
 
 """
-    get_variables(dataset; use_cache = true)
+    get_variables(dataset)
 
 Get descriptions of available variables for the `dataset`.
 
 See [Get Variables](https://cdaweb.gsfc.nasa.gov/WebServices/REST/#Get_Variables) for more details.
 """
-function get_variables(dataset; use_cache = true)
-    url = "$(SP_ENDPOINT)/$(dataset)/variables"
-    return get_cached_json(url; use_cache)
-end
+get_variables(dataset) = get_cached_json("$(SP_ENDPOINT)/$(dataset)/variables")
 
 function get_variable_names(dataset)
     master = _find_master_cdf(dataset)

@@ -16,7 +16,7 @@ function get_cached_json(url; use_cache = true, query...)
         end
         _filter_metadata(result, query)
     else
-        _cdas_read(url; query...)
+        _json_read1(HTTP.get(url, HEADER; query))
     end
 end
 
