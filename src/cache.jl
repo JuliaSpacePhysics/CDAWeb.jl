@@ -1,5 +1,40 @@
 # Cache-specific utility functions (database functions are in database.jl)
 
+"""Clear the in-memory metadata cache (datasets, variables, etc.)."""
+function clear_metadata_cache!()
+    empty!(_METADATA_CACHE)
+    return
+end
+
+# Read the first value from a JSON response
+_json_read1(resp) = first(values(JSON3.read(resp.body)))
+
+function get_cached_json(url; use_cache = true, query...)
+    return if use_cache
+        result = get!(_METADATA_CACHE, url) do
+            _json_read1(HTTP.get(url, HEADER))
+        end
+        _filter_metadata(result, query)
+    else
+        _cdas_read(url; query...)
+    end
+end
+
+# Filter a cached metadata array by matching query params to struct fields.
+# Param names are camelCase (e.g. observatoryGroup); field names are PascalCase (ObservatoryGroup).
+# Array fields use membership testing; scalar fields use equality.
+function _filter_metadata(items, filters)
+    _camelCase(s) = Symbol(uppercasefirst(String(s)))
+    isempty(filters) && return items
+    normalized_filters = Dict(_camelCase(k) => v for (k, v) in filters)
+    return filter(items) do item
+        all(normalized_filters) do (k, v)
+            val = getproperty(item, k)
+            val isa AbstractArray ? (v in val) : (val == v)
+        end
+    end
+end
+
 """Clear cache entries for a specific dataset (process-safe)."""
 function clear_cache!(dataset)
     for orig in (false, true)

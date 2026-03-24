@@ -18,10 +18,12 @@ export get_observatories, get_observatory_groups, get_observatory_groups_and_ins
 export get_inventory, get_variables, get_original_file_descs, get_data_file_descs
 # Data access
 export get_data, get_dataset, get_data_files
-export clear_cache!
+export clear_cache!, clear_metadata_cache!
 export find_master_cdf
 export find_datasets
 export @cda_str
+
+const _METADATA_CACHE = Dict{String, Any}()
 
 const master_url = "https://spdf.gsfc.nasa.gov/pub/software/cdawlib/0MASTERS/master.tar"
 const CDAWEB_BASE_URL = "https://cdaweb.gsfc.nasa.gov/WS/cdasr/1"
