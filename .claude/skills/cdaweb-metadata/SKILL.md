@@ -21,17 +21,17 @@ Values are case-sensitive.
 
 ## Step: Find the dataset ID
 
-`get_datasets` accepts ANDed filters: `observatoryGroup`, `instrumentType`, `observatory`, `instrument`, `id`.
+`get_datasets` ANDs these filters: `observatoryGroup`, `instrumentType`, `observatory`, `instrument`, `id`.
 
 ```julia
 using CDAWeb
 
-# Filter by one or more parameters — all are combined with AND
+# Filter by one or more parameters
 datasets = get_datasets(; observatoryGroup="THEMIS")
-# or more specific:
+# More specific:
 # datasets = get_datasets(; observatoryGroup="THEMIS", instrumentType="Particles (space)")
 
-# Optionally narrow further by ID or label keywords
+# Narrow further by ID or label keywords
 target = filter(d -> occursin("THD", d.Id) && occursin("SST", d.Id), datasets)
 
 for d in target
@@ -39,11 +39,9 @@ for d in target
 end
 ```
 
-Other useful filter fields: `Label`, `TimeInterval`.
+Other useful fields: `Label`, `TimeInterval`.
 
 ## Step: Get variable metadata
-
-Then:
 
 ```julia
 vars = get_variables("THD_L2_SST")
@@ -68,8 +66,6 @@ flux = filter(v -> occursin("flux", lowercase(v.LongDescription)), vars)
 
 ## Step: Dataset-level metadata
 
-For full dataset metadata:
-
 ```julia
 ds = get_dataset("THD_L2_SST")
 # Useful fields: Id, Label, TimeInterval, PiName, Notes, DatasetLink
@@ -79,7 +75,7 @@ println("Coverage: ", ds.TimeInterval.Start, " → ", ds.TimeInterval.End)
 
 ## Output format
 
-Present results as:
+Return:
 
 1. **Dataset** — ID, label, time coverage
 2. **Relevant variables** — name and description for each match, grouped by type

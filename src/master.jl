@@ -4,7 +4,7 @@ function download_and_extract_master_cdf(url::String)
     return mktempdir() do tmp_path
         master_archive = joinpath(tmp_path, "masters.tar")
         Downloads.download(url, master_archive)
-        Tar.extract(master_archive, MASTERS_CDF_PATH)
+        extract(master_archive, MASTERS_CDF_PATH)
     end
 end
 

@@ -7,7 +7,7 @@ function clear_metadata_cache!()
 end
 
 # Read the first value from a JSON response
-_json_read1(resp) = first(values(JSON3.read(resp.body)))
+_json_read1(resp) = first(values(JSON.parse(String(resp.body))))
 
 function get_cached_json(url; use_cache = true, query...)
     return if use_cache
@@ -29,7 +29,7 @@ function _filter_metadata(items, filters)
     normalized_filters = Dict(_camelCase(k) => v for (k, v) in filters)
     return filter(items) do item
         all(normalized_filters) do (k, v)
-            val = getproperty(item, k)
+            val = item[String(k)]
             val isa AbstractArray ? (v in val) : (val == v)
         end
     end

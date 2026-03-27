@@ -12,8 +12,8 @@ function _download_file(url, dataset, args...; dir = joinpath(DATA_CACHE_PATH, d
 end
 
 function no_data_available(data)
-    return if haskey(data, :Error)
-        data.Error[1] == "No data available."
+    return if haskey(data, "Error")
+        data["Error"][1] == "No data available."
     else
         isempty(data)
     end
@@ -37,9 +37,9 @@ function _get_file_urls_from_api(args...; status_exception = false, kw...)
     @debug "Requesting data from CDAWeb: $(url)"
     # Set headers to request JSON response
     response = HTTP.get(url, HEADER; status_exception)
-    data = JSON3.read(response.body)
-    return if haskey(data, :FileDescription)
-        (desc.Name for desc in data.FileDescription)
+    data = JSON.parse(String(response.body))
+    return if haskey(data, "FileDescription")
+        (desc["Name"] for desc in data["FileDescription"])
     elseif no_data_available(data)
         String[]
     else

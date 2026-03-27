@@ -34,7 +34,7 @@ using Dates
     @testset "Get variables" begin
         res = CDAWeb.get_variables("WI_H1_SWE")
         @test length(res) == 81
-        @test collect(keys(res[1])) == [:Name, :ShortDescription, :LongDescription]
+        @test collect(keys(res[1])) == ["Name", "ShortDescription", "LongDescription"]
         names = CDAWeb.get_variable_names("WI_H1_SWE")
         @test length(names) == 81
         @test "Epoch" ∉ names
