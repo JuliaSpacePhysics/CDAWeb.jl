@@ -2,8 +2,8 @@ module CDAWeb
 
 using Dates
 using Downloads
+using URIs
 using Tar: extract
-using HTTP
 using CDFDatasets
 using JSON
 using SQLite, DBInterface

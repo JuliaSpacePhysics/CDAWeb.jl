@@ -9,7 +9,7 @@ function download_and_extract_master_cdf(url::String)
 end
 
 function update_master_cdf(masters_url = master_url; verbose = false)
-    response = HTTP.head(masters_url)
+    response = Downloads.request(masters_url; method = "HEAD")
     last_modified = get(Dict(response.headers), "Last-Modified", "")
 
     cache_file = MASTER_LAST_MODIFIED

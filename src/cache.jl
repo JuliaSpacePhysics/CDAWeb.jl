@@ -6,17 +6,25 @@ function clear_metadata_cache!()
     return
 end
 
-# Read the first value from a JSON response
-_json_read1(resp) = first(values(JSON.parse(String(resp.body))))
+function _get(url; headers = HEADER, throw = true, query...)
+    if !isempty(query)
+        url = url * "?" * join(["$(k)=$(URIs.escapeuri(string(v)))" for (k, v) in pairs(query)], "&")
+    end
+    buf = IOBuffer()
+    Downloads.request(url; method = "GET", headers, output = buf, throw)
+    return take!(buf)
+end
+
+_json_read1(body::AbstractVector{UInt8}) = first(values(JSON.parse(String(body))))
 
 function get_cached_json(url; use_cache = true, query...)
     return if use_cache
         result = get!(_METADATA_CACHE, url) do
-            _json_read1(HTTP.get(url, HEADER))
+            _json_read1(_get(url))
         end
         _filter_metadata(result, query)
     else
-        _json_read1(HTTP.get(url, HEADER; query))
+        _json_read1(_get(url; query...))
     end
 end
 
