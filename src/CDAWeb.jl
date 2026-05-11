@@ -7,8 +7,8 @@ using HTTP
 using CDFDatasets
 using JSON
 using SQLite, DBInterface
-using TypedTables: FlexTable
-using ResumableFunctions
+using Tables: columntable
+using SpaceDataModel: TimeRanges
 import CDFDatasets as CDF
 using CDFDatasets: var_type, variable, cdfopen
 
@@ -49,11 +49,8 @@ include("types.jl")
 """Get cache metadata"""
 function cache_metadata(orig::Bool = false)
     db = _get_cache_db(orig)
-    query_result = DBInterface.execute(db, "SELECT * FROM cache")
-    tbl = FlexTable(query_result)
-    tbl.start_time = unix2datetime.(tbl.start_time)
-    tbl.end_time = unix2datetime.(tbl.end_time)
-    return tbl
+    cols = columntable(DBInterface.execute(db, "SELECT * FROM cache"))
+    return merge(cols, (start_time = unix2datetime.(cols.start_time), end_time = unix2datetime.(cols.end_time)))
 end
 
 end

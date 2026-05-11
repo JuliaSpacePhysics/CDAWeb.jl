@@ -106,17 +106,10 @@ end
 
 # Fragment-based caching utilities
 
-"""Split time range into fixed-duration fragments with aligned boundaries."""
-@resumable function split_into_fragments(start_time::DateTime, stop_time::DateTime, fragment_period::Period)
-    # Align boundaries to fragment intervals for consistent caching
-    aligned_start = floor(start_time, fragment_period)
-    aligned_stop = ceil(stop_time, fragment_period)
-    current = aligned_start
-    while current < aligned_stop
-        fragment_end = current + fragment_period
-        @yield (current, fragment_end)
-        current = fragment_end
-    end
+# Split time range into fixed-duration fragments with aligned boundaries.
+# Align boundaries to fragment intervals for consistent caching
+function split_into_fragments(t0, t1, Δt)
+    return TimeRanges(floor(t0, Δt), ceil(t1, Δt), Δt)
 end
 
 """Group contiguous fragments to minimize API calls."""
