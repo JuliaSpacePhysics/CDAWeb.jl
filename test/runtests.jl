@@ -10,7 +10,9 @@ using Test
     Aqua.test_all(CDAWeb)
 end
 
-include("test_restful_api.jl")
+@testset "RESTful Web Services" begin
+    include("test_restful_api.jl")
+end
 
 @testset "Master CDF lookup" begin
     CDAWeb.update_master_cdf()
@@ -44,6 +46,17 @@ end
     @test CommonDataModel.name(dens2) == CommonDataModel.name(dens)
 
     @test isempty(CDAWeb.get_data("PSP_SWP_SPI_SF00_L3_MOM/DENS", DateTime(1990, 1, 1), DateTime(1990, 1, 1, 1)))
+end
+
+@testset "CDAWebProduct display" begin
+    p = CDAWebProduct("DS/param")
+    @test repr(p) == repr(MIME("text/plain"), p) == "CDAWebProduct(\"DS/param\")"                        # 2-arg show
+    @test eval(Meta.parse(repr(p))) == p
+    ps = cda"DS/a,b"
+    ps_eval = eval(Meta.parse(repr(ps)))
+    @test occursin("CDAWebProducts", repr(ps))
+    @test ps_eval == ps
+    @test ps_eval isa CDAWebProducts
 end
 
 @testset "cda_str macro" begin

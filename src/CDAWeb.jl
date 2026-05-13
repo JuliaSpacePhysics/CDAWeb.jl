@@ -21,7 +21,7 @@ export get_data, get_dataset, get_data_files
 export clear_cache!, clear_metadata_cache!
 export find_master_cdf
 export find_datasets
-export @cda_str
+export @cda_str, CDAWebProduct, CDAWebProducts
 
 const _METADATA_CACHE = Dict{String, Any}()
 
