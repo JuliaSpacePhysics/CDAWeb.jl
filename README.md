@@ -1,5 +1,6 @@
 # CDAWeb
 
+[![Dev](https://img.shields.io/badge/docs-dev-blue.svg?logo=julia)](https://JuliaSpacePhysics.github.io/CDAWeb.jl/dev/)
 [![DOI](https://zenodo.org/badge/1061976595.svg)](https://doi.org/10.5281/zenodo.17519096)
 [![version](https://juliahub.com/docs/General/CDAWeb/stable/version.svg)](https://juliahub.com/ui/Packages/General/CDAWeb)
 
@@ -9,23 +10,10 @@
 
 Julia interface to NASA's CDAWeb RESTful services for accessing space physics data.
 
-**Installation**: at the Julia REPL, run `using Pkg; Pkg.add("CDAWeb")`
-
-**Documentation**: [![Dev](https://img.shields.io/badge/docs-dev-blue.svg?logo=julia)](https://JuliaSpacePhysics.github.io/CDAWeb.jl/dev/)
-
-**Agent skill**: at the terminal, run `npx skills add JuliaSpacePhysics/CDAWeb.jl`
-
-## Features
-
-- Local cache system to avoid redundant downloads with fine-grained control
-  - **Automatic cache management**: Metadata persisted to disk on exit, loaded on startup (Cache location: `~/.cdaweb/data/`)
-  - **Fragment-based caching**: Splits time ranges into fixed-duration fragments (default 24 hours) for efficient reuse across overlapping queries
-  - **Manual cache control**: `CDAWeb.cache_metadata()`, `CDAWeb.clear_cache!()`, and `CDAWeb.persist_cache!()` for explicit management of cache metadata
-- **Efficient data access**: Data is memory-mapped and lazily represented using [CommonDataFormat.jl](https://github.com/JuliaSpacePhysics/CommonDataFormat.jl) for super fast querying and loading
-
-### Data Access
+## Quick Start
 
 ```julia
+using Pkg; Pkg.add("CDAWeb")
 using CDAWeb
 
 # Get dataset description
@@ -47,6 +35,17 @@ files = get_data_files("AC_H0_MFI", "BGSEc", "2023-01-01", "2023-01-02";
                        fragment_period = Hour(12),  # Custom fragment size
                        disable_cache = false)       # Enable/disable caching
 ```
+
+## Features
+
+**Agent skill**: at terminal, run `npx skills add JuliaSpacePhysics/CDAWeb.jl`
+
+- Local cache system to avoid redundant downloads with fine-grained control
+  - **Automatic cache management**: Metadata persisted to disk on exit, loaded on startup (Cache location: `~/.cdaweb/data/`)
+  - **Fragment-based caching**: Splits time ranges into fixed-duration fragments (default 24 hours) for efficient reuse across overlapping queries
+  - **Manual cache control**: `CDAWeb.cache_metadata()`, `CDAWeb.clear_cache!()`, and `CDAWeb.persist_cache!()` for explicit management of cache metadata
+- **Efficient data access**: Data and metadata are memory-mapped and lazily represented using [CommonDataFormat.jl](https://github.com/JuliaSpacePhysics/CommonDataFormat.jl)
+
 
 ## References
 
