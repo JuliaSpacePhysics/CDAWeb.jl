@@ -30,6 +30,10 @@ end
 
 Base.size(p::CDAWebProducts) = size(p.paths)
 Base.getindex(p::CDAWebProducts, i) = getindex(p.paths, i)
+Base.summary(io::IO, ps::CDAWebProducts) = print(io, length(ps), "-element CDAWebProducts")
+Base.show(io::IO, ps::CDAWebProducts) = print(io, "CDAWebProducts([", join(repr.(ps.paths), ", "), "])")
+Base.show(io::IO, p::CDAWebProduct) = print(io, "CDAWebProduct($(repr(p.path)))")
+Base.show(io::IO, ::MIME"text/plain", p::CDAWebProduct) = print(io, "CDAWebProduct($(repr(p.path)))")
 
 (p::CDAWebProduct)(args...; kw...) = get_data(p.path, args...; clip = true, direct = false, kw...)
 (ps::CDAWebProducts)(args...; kw...) = map(ps.paths) do p
