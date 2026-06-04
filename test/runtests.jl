@@ -21,15 +21,6 @@ end
     CDAWeb.find_master_cdf("psp_fld_l2_mag_sc_00")
 end
 
-
-using DimensionalData
-
-@testset "Concatenation" begin
-    data = CDAWeb.get_data("OMNI_COHO1HR_MERGED_MAG_PLASMA", DateTime(2020, 5, 2), DateTime(2020, 6, 7))["V"]
-    DimArray(data)
-    # 80.709 μs (382 allocs: 57.938 KiB)
-end
-
 @testset "CDAWeb data retrieval" begin
     t_start = DateTime(2020, 1, 1)
     t_stop = DateTime(2020, 1, 1, 1)

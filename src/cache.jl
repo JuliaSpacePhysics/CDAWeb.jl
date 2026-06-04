@@ -12,11 +12,11 @@ _json_read1(resp) = first(values(JSON.parse(String(resp.body))))
 function get_cached_json(url; use_cache = true, query...)
     return if use_cache
         result = get!(_METADATA_CACHE, url) do
-            _json_read1(HTTP.get(url, HEADER))
+            _json_read1(_http_get(url))
         end
         _filter_metadata(result, query)
     else
-        _json_read1(HTTP.get(url, HEADER; query))
+        _json_read1(_http_get(url; query))
     end
 end
 

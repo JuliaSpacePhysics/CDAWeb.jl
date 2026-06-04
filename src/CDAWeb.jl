@@ -30,6 +30,11 @@ const CDAWEB_BASE_URL = "https://cdaweb.gsfc.nasa.gov/WS/cdasr/1"
 const ENDPOINT = "$(CDAWEB_BASE_URL)/dataviews"
 const SP_ENDPOINT = "$(CDAWEB_BASE_URL)/dataviews/sp_phys/datasets"
 const HEADER = ["Accept" => "application/json"]
+
+_normquery(::Nothing) = nothing
+_normquery(q) = [string(k) => string(v) for (k, v) in pairs(q)]
+
+_http_get(url; query = nothing, kw...) = HTTP.get(url, HEADER, query = _normquery(query); kw...)
 const BASE_PATH = joinpath(homedir(), ".cdaweb")
 const MASTERS_CDF_PATH = joinpath(BASE_PATH, "masters")
 const MASTER_LAST_MODIFIED = joinpath(MASTERS_CDF_PATH, ".last_modified")
