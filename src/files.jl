@@ -36,7 +36,7 @@ function _get_file_urls_from_api(args...; status_exception = false, kw...)
     url = _build_request_url(args...; kw...)
     @debug "Requesting data from CDAWeb: $(url)"
     # Set headers to request JSON response
-    response = HTTP.get(url, HEADER; status_exception)
+    response = _http_get(url; status_exception)
     data = JSON.parse(String(response.body))
     return if haskey(data, "FileDescription")
         (desc["Name"] for desc in data["FileDescription"])

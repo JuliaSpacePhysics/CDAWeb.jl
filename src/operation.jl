@@ -67,7 +67,7 @@ See [Details](https://cdaweb.gsfc.nasa.gov/WebServices/REST/WebServices.html#Get
 """
 function get_inventory(dataset, t0, t1; dataview = "sp_phys")
     url = "$(ENDPOINT)/$(dataview)/datasets/$(dataset)/inventory/$(_format_time(t0)),$(_format_time(t1))"
-    return _json_read1(HTTP.get(url, HEADER))
+    return _json_read1(_http_get(url))
 end
 
 """
@@ -110,7 +110,7 @@ See also [`get_data_file_descs`](@ref).
 """
 function get_original_file_descs(id, t0, t1; dataview = "sp_phys")
     url = "$(ENDPOINT)/$(dataview)/datasets/$(id)/orig_data/$(_format_time(t0)),$(_format_time(t1))"
-    return _json_read1(HTTP.get(url, HEADER))
+    return _json_read1(_http_get(url))
 end
 
 """
@@ -123,5 +123,5 @@ See [Get Data](https://cdaweb.gsfc.nasa.gov/WebServices/REST/#Get_Data_GET) for 
 function get_data_file_descs(dataset, variables, t0, t1; dataview = "sp_phys", format = "cdf", query...)
     var_str = variables isa AbstractString ? variables : join(variables, ",")
     url = "$(ENDPOINT)/$(dataview)/datasets/$(dataset)/data/$(_format_time(t0)),$(_format_time(t1))/$(var_str)"
-    return _json_read1(HTTP.get(url, HEADER; query = (; format, query...)))
+    return _json_read1(_http_get(url; query = (; format, query...)))
 end
