@@ -1,7 +1,7 @@
 _filename(url, variable) = "$(variable)_$(basename(url))"
 _filename(url) = basename(url)
 
-function _download_file(url, dataset, args...; dir = joinpath(DATA_CACHE_PATH, dataset), update = false)
+function _download_file(url, dataset, args...; dir=joinpath(DATA_CACHE_PATH, dataset), update=false)
     mkpath(dir)
     output = joinpath(dir, _filename(url, args...))
     if !isfile(output) || update
@@ -19,7 +19,7 @@ function no_data_available(data)
     end
 end
 
-function _build_request_url(dataset, variable, start_time, stop_time; format = "cdf")
+function _build_request_url(dataset, variable, start_time, stop_time; format="cdf")
     start_str = _format_time(start_time)
     stop_str = _format_time(stop_time)
     return "$(SP_ENDPOINT)/$(dataset)/data/$(start_str),$(stop_str)/$(variable)?format=$(format)"
@@ -32,7 +32,7 @@ function _build_request_url(dataset, start_time, stop_time)
 end
 
 
-function _get_file_urls_from_api(args...; status_exception = false, kw...)
+function _get_file_urls_from_api(args...; status_exception=false, kw...)
     url = _build_request_url(args...; kw...)
     @debug "Requesting data from CDAWeb: $(url)"
     # Set headers to request JSON response
@@ -44,12 +44,12 @@ function _get_file_urls_from_api(args...; status_exception = false, kw...)
         String[]
     else
         # try again and set status_exception to true to throw an error
-        _get_file_urls_from_api(args...; status_exception = true, kw...)
+        _get_file_urls_from_api(args...; status_exception=true, kw...)
     end
 end
 
 """Fetch files from API, download them, and add to cache."""
-function _fetch_and_cache_files!(t0, t1, args...; disable_cache = false, kw...)
+function _fetch_and_cache_files!(t0, t1, args...; disable_cache=false, kw...)
     file_urls = _get_file_urls_from_api(args..., t0, t1; kw...)
     file_paths = _download_file.(file_urls, args...)
     disable_cache || !isempty(file_paths) && _add_files_to_cache!(t0, t1, file_paths, args...)
@@ -73,7 +73,7 @@ function find_cached_and_missing(dataset, start_time, stop_time; kw...)
 
         if current_time >= stop_time
             # Full coverage achieved
-            return cached_files, Tuple{DateTime, DateTime}[]
+            return cached_files, Tuple{DateTime,DateTime}[]
         end
     end
 
@@ -82,17 +82,17 @@ function find_cached_and_missing(dataset, start_time, stop_time; kw...)
 end
 
 """Find cached files and missing time ranges using fragment-based caching and SQL (for orig=false)."""
-function find_cached_and_missing(dataset, variable, start_time, stop_time; fragment_period::Period = Hour(24))
-    # Split requested range into fragments
-    fragments = split_into_fragments(start_time, stop_time, fragment_period)
+function find_cached_and_missing(dataset, variable, start_time, stop_time; fragment_period::Period=Hour(24))
+    # Split time range into fixed-duration fragments with aligned boundaries for consistent caching
+    fragments = TimeRanges(floor(start_time, fragment_period), ceil(stop_time, fragment_period), fragment_period)
 
-    entries = Tuple{DateTime, DateTime, String}[]
+    entries = Tuple{DateTime,DateTime,String}[]
     for row in _query(dataset, variable, start_time, stop_time)
         push!(entries, (unix2datetime(row[1]), unix2datetime(row[2]), row[3]))
     end
 
     cached_files = Set{String}()
-    missings = Tuple{DateTime, DateTime}[]
+    missings = Tuple{DateTime,DateTime}[]
 
     # Check coverage for each fragment
     entry_idx = 1
@@ -144,11 +144,11 @@ Get processed data file paths for a dataset + variables within time range (t0, t
 
 Note: usually this is slower and not suitable when needing multiple variables due to CDAWeb's web service processing overhead.
 """
-function get_data_files(dataset, variables, t0, t1; fragment_period = Hour(24), kw...)
-    return _get_data_files(t0, t1, dataset, variables; find_options = (; fragment_period), kw...)
+function get_data_files(dataset, variables, t0, t1; fragment_period=Hour(24), kw...)
+    return _get_data_files(t0, t1, dataset, variables; find_options=(; fragment_period), kw...)
 end
 
-function _get_data_files(start_time, stop_time, dataset, args...; disable_cache = false, find_options = (;), kw...)
+function _get_data_files(start_time, stop_time, dataset, args...; disable_cache=false, find_options=(;), kw...)
     dataset = any(islowercase, dataset) ? uppercase(dataset) : dataset
     if disable_cache
         return _fetch_and_cache_files!(start_time, stop_time, dataset, args...; disable_cache, kw...)
@@ -157,7 +157,7 @@ function _get_data_files(start_time, stop_time, dataset, args...; disable_cache 
 
     return if !isempty(missing_ranges)
         # Fetch missing time ranges
-        all_files = mapreduce(vcat, missing_ranges; init = cached_files) do (range_start, range_stop)
+        all_files = mapreduce(vcat, missing_ranges; init=cached_files) do (range_start, range_stop)
             @debug "Fetching missing range: $(range_start) to $(range_stop)"
             _fetch_and_cache_files!(range_start, range_stop, dataset, args...; kw...)
         end

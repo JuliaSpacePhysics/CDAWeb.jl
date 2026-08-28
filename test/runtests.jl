@@ -78,8 +78,6 @@ end
     t0 = DateTime(2020, 1, 1, 2)
     t1 = DateTime(2020, 1, 4, 3)
     dataset = "OMNI_COHO1HR_MERGED_MAG_PLASMA"
-    @test collect(CDAWeb.split_into_fragments(t0, t1, Day(1))) == [(DateTime(2020, 1, i), DateTime(2020, 1, i + 1)) for i in 1:4]
-
     CDAWeb.find_cached_and_missing(dataset, "V", t0, t1; fragment_period = Day(1))
 
     # Clear cache before test
