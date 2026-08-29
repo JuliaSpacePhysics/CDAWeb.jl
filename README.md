@@ -3,9 +3,6 @@
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg?logo=julia)](https://JuliaSpacePhysics.github.io/CDAWeb.jl/dev/)
 [![DOI](https://zenodo.org/badge/1061976595.svg)](https://doi.org/10.5281/zenodo.17519096)
 
-[![Build Status](https://github.com/JuliaSpacePhysics/CDAWeb.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/JuliaSpacePhysics/CDAWeb.jl/actions/workflows/CI.yml?query=branch%3Amain)
-[![Coverage](https://codecov.io/gh/JuliaSpacePhysics/CDAWeb.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/JuliaSpacePhysics/CDAWeb.jl)
-
 Julia interface to NASA's CDAWeb RESTful services for accessing space physics data.
 
 ## Quick Start
@@ -14,7 +11,7 @@ Julia interface to NASA's CDAWeb RESTful services for accessing space physics da
 using Pkg; Pkg.add("CDAWeb")
 using CDAWeb
 
-# Get dataset description
+# Get dataset metadata as JSON.Object
 dataset = get_dataset("AC_H0_MFI")
 # Get dataset within the time range
 dataset = get_data("AC_H0_MFI", "2023-01-01", "2023-01-02")
@@ -23,9 +20,8 @@ dataset = get_data("AC_H0_MFI", "2023-01-01", "2023-01-02")
 data = get_data("AC_H0_MFI", "BGSEc", "2023-01-01", "2023-01-02")
 
 # Access master CDF metadata
-master_var = get_data("AC_H0_MFI", "BGSEc")
+get_data("AC_H0_MFI", "BGSEc").metadata["FIELDNAM"]
 
-# Find datasets by name
 datasets = find_datasets("AC_H0")
 
 # Direct access to CDF files with fine-grained control
@@ -52,5 +48,5 @@ files = get_data_files("AC_H0_MFI", "BGSEc", "2023-01-01", "2023-01-02";
 
 ## Elsewhere
 
-- [`speasy`](https://github.com/SciQLop/speasy) pursues a similar goal, providing a similar `get_data` API to find and load space physics data. Speasy is more feature-complete, supporting multiple data sources such as AMDA and CSA. This package, however, focuses on finer control over cached data and offers straightforward, direct access to those files allowing offline access and reproducibility (see [speasy#237](https://github.com/SciQLop/speasy/issues/237) and [speasy#122](https://github.com/SciQLop/speasy/issues/122)).
+- [`speasy`](https://github.com/SciQLop/speasy) pursues a similar goal with a similar `get_data` API and support for multiple data sources including AMDA and CSA. This package, however, focuses on finer control over cached data with better performance and offers straightforward, direct access to those files allowing offline access and reproducibility (see [speasy#237](https://github.com/SciQLop/speasy/issues/237) and [speasy#122](https://github.com/SciQLop/speasy/issues/122)).
 - [xhelio-cdaweb](https://github.com/huangzesen/xhelio-cdaweb): NASA CDAWeb data access for heliophysics — MCP server + Python library
