@@ -68,7 +68,7 @@ end
     dataset = CDFDataset(file)
     t0 = typemax(DateTime)
     t1 = typemin(DateTime)
-    for (key, var) in dataset
+    for (_, var) in dataset
         isempty(var) && continue
         eltype(var) <: Dates.AbstractDateTime || continue
         t0 = min(t0, DateTime(var[1]))
@@ -105,12 +105,6 @@ function _add_files_to_cache!(requested_start, requested_stop, files, dataset, a
 end
 
 # Fragment-based caching utilities
-
-# Split time range into fixed-duration fragments with aligned boundaries.
-# Align boundaries to fragment intervals for consistent caching
-function split_into_fragments(t0, t1, Δt)
-    return TimeRanges(floor(t0, Δt), ceil(t1, Δt), Δt)
-end
 
 """Group contiguous fragments to minimize API calls."""
 function group_contiguous_fragments(fragments::Vector{Tuple{DateTime, DateTime}})
