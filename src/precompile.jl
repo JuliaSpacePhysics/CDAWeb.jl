@@ -1,6 +1,5 @@
 # Offline: seeds a throwaway cache with a bundled CDAWeb file so the cached read path compiles
-# without network. HTTP 2.x's `eltype(::Type{Headers})` invalidates CDFDatasets' precompiled
-# reads, so those are re-seeded here too.
+# without network.
 PrecompileTools.@setup_workload begin
     file = joinpath(@__DIR__, "..", "data", "V_omni_coho1hrs_merged_mag_plasma_20200101000000_20200102000000_cdaweb.cdf")
     dataset, var = "OMNI_COHO1HR_MERGED_MAG_PLASMA", "V"
