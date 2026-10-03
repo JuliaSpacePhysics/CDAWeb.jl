@@ -1,7 +1,7 @@
 _filename(url, variable) = "$(variable)_$(basename(url))"
 _filename(url) = basename(url)
 
-function _download_file(url, dataset, args...; dir=joinpath(DATA_CACHE_PATH, dataset), update=false)
+function _download_file(url, dataset, args...; dir=joinpath(_data_cache_path(), dataset), update=false)
     mkpath(dir)
     output = joinpath(dir, _filename(url, args...))
     if !isfile(output) || update

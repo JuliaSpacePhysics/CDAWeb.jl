@@ -4,6 +4,7 @@ using Dates
 using Downloads
 using Tar: extract
 using HTTP
+using PrecompileTools
 using CDFDatasets
 using JSON
 using SQLite, DBInterface
@@ -35,10 +36,13 @@ _normquery(::Nothing) = nothing
 _normquery(q) = [string(k) => string(v) for (k, v) in pairs(q)]
 
 _http_get(url; query = nothing, kw...) = HTTP.get(url, HEADER, query = _normquery(query); kw...)
-const BASE_PATH = joinpath(homedir(), ".cdaweb")
-const MASTERS_CDF_PATH = joinpath(BASE_PATH, "masters")
-const MASTER_LAST_MODIFIED = joinpath(MASTERS_CDF_PATH, ".last_modified")
-const DATA_CACHE_PATH = joinpath(BASE_PATH, "data")
+# Assigned in `__init__`: a `const` path would bake in the precompiling user's `homedir()`.
+const BASE_PATH = Ref{String}()
+_masters_path() = joinpath(BASE_PATH[], "masters")
+_master_last_modified() = joinpath(_masters_path(), ".last_modified")
+_data_cache_path() = joinpath(BASE_PATH[], "data")
+
+__init__() = (BASE_PATH[] = joinpath(homedir(), ".cdaweb"))
 
 include("master.jl")
 include("operation.jl")
@@ -48,8 +52,8 @@ include("cache.jl")
 include("database.jl")
 include("datasets.jl")
 include("initialization.jl")
-include("precompile.jl")
 include("types.jl")
+include("precompile.jl")
 
 """Get cache metadata"""
 function cache_metadata(orig::Bool = false)
