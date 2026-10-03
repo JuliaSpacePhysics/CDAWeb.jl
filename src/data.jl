@@ -44,13 +44,11 @@ function _get_data(dataset, var, t0, t1; clip = false, master_attributes = false
     end
     ds = cdfopen(file_paths)
 
-    metadata = !master_attributes ? nothing : begin
-            master_cdf = find_master_cdf(dataset)
-            master_cdf[var].attrib
-            # num = arrays[1].data.vdr.num
-            # CDF.CommonDataFormat.vattrib(master_cdf.source, num)
-        end
-    data = variable(ds, var; metadata)
+    data = if master_attributes
+        variable(ds, var; metadata = find_master_cdf(dataset)[var].attrib)
+    else
+        variable(ds, var)
+    end
     return clip ? data[start_time .. stop_time] : data
 end
 
