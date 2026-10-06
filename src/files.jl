@@ -63,14 +63,14 @@ function find_cached_and_missing(dataset, start_time, stop_time; kw...)
     current_time = start_time
     cached_files = String[]
 
-    for (entry_start, entry_end, path) in _query(dataset, start_time, stop_time)
+    for (entry_start, entry_end, path) in _query(start_time, stop_time, dataset)
         !isfile(path) && return cached_files, [(start_time, stop_time)]
-        if unix2datetime(entry_start) > current_time
+        if entry_start > current_time
             # Gap found - need to fetch missing range
             return cached_files, [(start_time, stop_time)]
         end
         push!(cached_files, path)
-        current_time = max(current_time, unix2datetime(entry_end))
+        current_time = max(current_time, entry_end)
 
         if current_time >= stop_time
             # Full coverage achieved
@@ -87,10 +87,7 @@ function find_cached_and_missing(dataset, variable, start_time, stop_time; fragm
     # Split time range into fixed-duration fragments with aligned boundaries for consistent caching
     fragments = TimeRanges(floor(start_time, fragment_period), ceil(stop_time, fragment_period), fragment_period)
 
-    entries = Tuple{DateTime,DateTime,String}[]
-    for row in _query(dataset, variable, start_time, stop_time)
-        push!(entries, (unix2datetime(row[1]), unix2datetime(row[2]), row[3]))
-    end
+    entries = _query(start_time, stop_time, dataset, variable)
 
     cached_files = Set{String}()
     missings = Tuple{DateTime,DateTime}[]

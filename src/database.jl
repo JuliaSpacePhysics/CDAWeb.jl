@@ -5,7 +5,7 @@ const _DB_CACHE_VARIABLE = Ref{Union{SQLite.DB, Nothing}}(nothing)
 const _DB_CACHE_ORIG = Ref{Union{SQLite.DB, Nothing}}(nothing)
 const _DB_LOCK = ReentrantLock()
 
-# Prepared statement cache - lazy initialization
+# Prepared lazily; only used under `_DB_LOCK`
 const _STMT_ORIG_CACHE = Ref{Union{SQLite.Stmt, Nothing}}(nothing)
 const _STMT_VARIABLE_CACHE = Ref{Union{SQLite.Stmt, Nothing}}(nothing)
 
@@ -14,36 +14,9 @@ const _STMT_VARIABLE_CACHE = Ref{Union{SQLite.Stmt, Nothing}}(nothing)
 # https://sqlite.org/lang_datefunc.html
 @inline _datetime_to_unix(dt::DateTime) = round(Int, Dates.datetime2unix(dt))
 
-"""Get the prepared statement for orig cache queries."""
-function _get_stmt_orig_cache()
-    if isnothing(_STMT_ORIG_CACHE[])
-        db = _get_cache_db(true)
-        # Query returns Unix timestamps as INTEGER
-        query = """SELECT start_time, end_time, path FROM cache
-        WHERE dataset = ?
-        AND start_time < ?
-        AND end_time >= ?
-        ORDER BY start_time"""
-        _STMT_ORIG_CACHE[] = DBInterface.prepare(db, query)
-    end
-    return _STMT_ORIG_CACHE[]
-end
-
-"""Get the prepared statement for variable cache queries."""
-function _get_stmt_variable_cache()
-    if isnothing(_STMT_VARIABLE_CACHE[])
-        db = _get_cache_db(false)
-        # Query returns Unix timestamps as INTEGER
-        query = """SELECT start_time, end_time, path FROM cache
-        WHERE dataset = ?
-        AND variable = ?
-        AND start_time < ?
-        AND end_time >= ?
-        ORDER BY start_time"""
-        _STMT_VARIABLE_CACHE[] = DBInterface.prepare(db, query)
-    end
-    return _STMT_VARIABLE_CACHE[]
-end
+# Columns identifying a cache entry besides its time range; `variable` is empty for the orig cache
+_key_columns(variable) = isempty(variable) ? ("dataset",) : ("dataset", "variable")
+_key_match(variable) = join(("$c = ?" for c in _key_columns(variable)), " AND ")
 
 function _get_cache_db_file(orig::Bool)
     return joinpath(BASE_PATH[], "cache_$(orig ? "orig" : "variable").sqlite")
@@ -111,18 +84,22 @@ function _close_cache_db!()
     return
 end
 
-function _query(dataset, start_time, stop_time)
-    stmt = _get_stmt_orig_cache()
-    params = (dataset, _datetime_to_unix(stop_time), _datetime_to_unix(start_time))
-    return DBInterface.execute(stmt, params)
+# Entries overlapping [start_time, stop_time] as `(start, end, path)`, ordered by start.
+# Materialized under the lock: two tasks can't iterate one prepared statement.
+function _query(start_time, stop_time, dataset, variable...)
+    orig = isempty(variable)
+    params = (dataset, variable..., _datetime_to_unix(stop_time), _datetime_to_unix(start_time))
+    return lock(_DB_LOCK) do
+        ref = orig ? _STMT_ORIG_CACHE : _STMT_VARIABLE_CACHE
+        if isnothing(ref[])
+            ref[] = DBInterface.prepare(
+                _get_cache_db(orig), """SELECT start_time, end_time, path FROM cache
+                WHERE $(_key_match(variable)) AND start_time < ? AND end_time >= ? ORDER BY start_time"""
+            )
+        end
+        [(unix2datetime(r[1]), unix2datetime(r[2]), String(r[3])) for r in DBInterface.execute(ref[], params)]
+    end
 end
-
-function _query(dataset, variable, start_time, stop_time)
-    stmt = _get_stmt_variable_cache()
-    params = (dataset, variable, _datetime_to_unix(stop_time), _datetime_to_unix(start_time))
-    return DBInterface.execute(stmt, params)
-end
-
 
 """Update orig cache metadata in SQLite database (process-safe, atomic)."""
 function _update_cache!(dataset, start_times, end_times, files)
