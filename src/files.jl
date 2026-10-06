@@ -106,7 +106,8 @@ function find_cached_and_missing(dataset, variable, start_time, stop_time; fragm
 
             # Skip entries that end before fragment starts
             if entry_end < frag_start
-                entry_idx += 1 && continue
+                entry_idx += 1
+                continue
             end
 
             # Stop if entry starts after fragment ends
