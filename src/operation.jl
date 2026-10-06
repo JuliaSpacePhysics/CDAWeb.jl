@@ -96,8 +96,12 @@ Get descriptions of available datasets for the `query`.
 See [Get Datasets](https://cdaweb.gsfc.nasa.gov/WebServices/REST/#Get_Datasets) for available query parameters.
 """
 function get_datasets(; use_cache = true, query...)
+    use_cache &= all(in(_LOCAL_DATASET_FILTERS), keys(query))
     return get_cached_json(SP_ENDPOINT; use_cache, query...)
 end
+
+# Queries answerable from the cached full list; others (e.g. `idPattern`, `startDate`) need the server.
+const _LOCAL_DATASET_FILTERS = (:id, :observatoryGroup, :instrumentType, :observatory, :instrument)
 
 """
     get_original_file_descs(id, start_time, stop_time; dataview = "sp_phys")
