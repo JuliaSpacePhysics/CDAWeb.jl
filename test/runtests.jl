@@ -121,6 +121,9 @@ end
     id = "AC_H2_MFI"
     res = CDAWeb.get_dataset(id)
     @test res.Id == id
+    @test CDAWeb.get_dataset(res.Doi).Id == id
+    @test CDAWeb.get_dataset(res.SpaseResourceId).Id == id
+    @test [d.Id for d in get_datasets(; idPattern = "AC_H2_MFI")] == [id]
 
     CDAWeb.get_dataset("OMNI_COHO1HR_MERGED_MAG_PLASMA", "2020-5-2", "2020-5-3")
     CDAWeb.get_dataset("OMNI_COHO1HR_MERGED_MAG_PLASMA", "1900-1-1", "1900-1-2")

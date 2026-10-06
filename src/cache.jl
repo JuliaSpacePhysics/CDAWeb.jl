@@ -23,13 +23,13 @@ end
 # Filter a cached metadata array by matching query params to struct fields.
 # Param names are camelCase (e.g. observatoryGroup); field names are PascalCase (ObservatoryGroup).
 # Array fields use membership testing; scalar fields use equality.
+# `id` may be a CDAS, DOI or SPASE identifier, as the server accepts.
 function _filter_metadata(items, filters)
-    _camelCase(s) = Symbol(uppercasefirst(String(s)))
     isempty(filters) && return items
-    normalized_filters = Dict(_camelCase(k) => v for (k, v) in filters)
     return filter(items) do item
-        all(normalized_filters) do (k, v)
-            val = item[String(k)]
+        all(filters) do (k, v)
+            k == :id && return v in (item["Id"], get(item, "Doi", nothing), get(item, "SpaseResourceId", nothing))
+            val = item[uppercasefirst(String(k))]
             val isa AbstractArray ? (v in val) : (val == v)
         end
     end
