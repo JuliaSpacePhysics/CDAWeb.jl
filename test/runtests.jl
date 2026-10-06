@@ -117,6 +117,28 @@ end
     @test length(CDAWeb.cache_metadata().start_time) == 0
 end
 
+# Isolated from the user's cache in ~/.cdaweb
+function with_temp_cache(f)
+    CDAWeb._close_cache_db!()
+    home = CDAWeb.BASE_PATH[]
+    return mktempdir() do dir
+        CDAWeb.BASE_PATH[] = dir
+        try
+            f()
+        finally
+            CDAWeb._close_cache_db!()
+            CDAWeb.BASE_PATH[] = home
+        end
+    end
+end
+
+@testset "Contiguous missing fragments fetched in one request" begin
+    with_temp_cache() do
+        get_data_files("OMNI_COHO1HR_MERGED_MAG_PLASMA", "V", DateTime(2020, 1, 1), DateTime(2020, 1, 3); fragment_period = Day(1))
+        @test length(CDAWeb.cache_metadata().path) == 1
+    end
+end
+
 @testset "Processed files for several variables" begin
     files = get_data_files("OMNI_COHO1HR_MERGED_MAG_PLASMA", ["BR", "BT"], DateTime(2020, 1, 1), DateTime(2020, 1, 2); disable_cache = true)
     ds = CDFDataset(only(files))

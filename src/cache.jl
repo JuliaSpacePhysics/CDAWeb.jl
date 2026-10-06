@@ -97,7 +97,7 @@ end
 # Fragment-based caching utilities
 
 """Group contiguous fragments to minimize API calls."""
-function group_contiguous_fragments(fragments::Vector{Tuple{DateTime, DateTime}})
+function group_contiguous_fragments(fragments)
     isempty(fragments) && return Tuple{DateTime, DateTime}[]
     grouped = Tuple{DateTime, DateTime}[]
     current_start, current_stop = fragments[1]

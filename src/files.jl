@@ -161,7 +161,7 @@ function _get_data_files(start_time, stop_time, dataset, args...; disable_cache=
 
     return if !isempty(missing_ranges)
         # Fetch missing time ranges
-        all_files = mapreduce(vcat, missing_ranges; init=cached_files) do (range_start, range_stop)
+        all_files = mapreduce(vcat, group_contiguous_fragments(missing_ranges); init=cached_files) do (range_start, range_stop)
             @debug "Fetching missing range: $(range_start) to $(range_stop)"
             _fetch_and_cache_files!(range_start, range_stop, dataset, args...; kw...)
         end
