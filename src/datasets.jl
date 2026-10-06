@@ -1,14 +1,9 @@
-function find_datasets(name)
-    path = joinpath(_masters_path(), name)
-    isfile(path) && return CDFDataset(path)
+"""
+    find_datasets(name)
 
-    # Otherwise, find files whose names contain the substring (case-insensitive)
-    lcname = lowercase(name)
-    files = filter!(f -> endswith(f, ".cdf") && occursin(lcname, f), readdir(_masters_path()))
-    return map(files) do f
-        CDFDataset(joinpath(_masters_path(), f))
-    end
-end
+Master CDF datasets whose filenames contain `name` (case-insensitive).
+"""
+find_datasets(name) = [CDFDataset(joinpath(_masters_path(), f)) for f in _master_files(name)]
 
 """
     get_dataset(id; kw...)

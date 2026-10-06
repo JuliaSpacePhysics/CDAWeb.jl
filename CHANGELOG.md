@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Changed
+
+- `find_datasets` always returns a `Vector`, also for an exact master CDF filename.
+
 ## [0.2.0] - 2025-12-13
 
 ### Changed

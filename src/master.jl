@@ -35,15 +35,20 @@ function build_master_cdf_index()
     return Dict(zip(names, files))
 end
 
+# Master CDFs whose filenames contain `name` (case-insensitive)
+function _master_files(name)
+    ispath(_master_last_modified()) || update_master_cdf()
+    lcname = lowercase(name)
+    return filter!(f -> endswith(f, ".cdf") && occursin(lcname, f), readdir(_masters_path()))
+end
+
 function _find_master_cdf(name)
     _path = endswith(name, ".cdf") ? name : "$(lowercase(name))_00000000_v01.cdf"
     ispath(_master_last_modified()) || update_master_cdf()
     path = joinpath(_masters_path(), _path)
     isfile(path) && return CDFDataset(path)
 
-    # Otherwise, find files whose names contain the substring (case-insensitive)
-    lcname = lowercase(name)
-    files = filter!(f -> endswith(f, ".cdf") && occursin(lcname, f), readdir(_masters_path()))
+    files = _master_files(name)
     if length(files) == 1
         return CDFDataset(joinpath(_masters_path(), first(files)))
     elseif isempty(files)
