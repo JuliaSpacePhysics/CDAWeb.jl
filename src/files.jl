@@ -144,10 +144,12 @@ get_data_files(dataset, t0, t1; kw...) = _get_data_files(t0, t1, dataset; kw...)
 
 Get processed data file paths for a dataset + variables within time range (t0, t1). 
 
-Note: usually this is slower and not suitable when needing multiple variables due to CDAWeb's web service processing overhead.
+`variables` is a name or a collection of names, fetched together into the same files.
+
+Note: usually this is slower than the original files due to CDAWeb's web service processing overhead.
 """
 function get_data_files(dataset, variables, t0, t1; fragment_period=Hour(24), kw...)
-    return _get_data_files(t0, t1, dataset, variables; find_options=(; fragment_period), kw...)
+    return _get_data_files(t0, t1, dataset, _join_vars(variables); find_options=(; fragment_period), kw...)
 end
 
 function _get_data_files(start_time, stop_time, dataset, args...; disable_cache=false, find_options=(;), kw...)

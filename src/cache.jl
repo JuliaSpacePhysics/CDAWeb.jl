@@ -53,16 +53,6 @@ function clear_cache!()
     return
 end
 
-# Get the time range of the file.
-@inline function _get_file_time_range(file, variable)
-    dataset = CDFDataset(file)
-    var = dataset[variable]
-    time_var = CDFDatasets.attrib(var, "DEPEND_0")
-    isnothing(time_var) && return nothing
-    times = dataset[time_var]
-    return isempty(times) ? nothing : (DateTime(times[1]), DateTime(times[end]))
-end
-
 # Select time variable(s) from the file and return the extrema of the time variable(s).
 @inline function _get_file_time_range(file)
     dataset = CDFDataset(file)
@@ -93,7 +83,7 @@ function _expand_time_ranges(timeranges, requested_start, requested_stop)
 end
 
 function _add_files_to_cache!(requested_start, requested_stop, files, dataset, args...)
-    timeranges = _get_file_time_range.(files, args...)
+    timeranges = _get_file_time_range.(files)
     if any(isnothing, timeranges)
         @debug "Could not determine time range for $files, skipping cache metadata update"
         return

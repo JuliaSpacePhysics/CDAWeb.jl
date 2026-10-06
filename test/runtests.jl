@@ -117,6 +117,12 @@ end
     @test length(CDAWeb.cache_metadata().start_time) == 0
 end
 
+@testset "Processed files for several variables" begin
+    files = get_data_files("OMNI_COHO1HR_MERGED_MAG_PLASMA", ["BR", "BT"], DateTime(2020, 1, 1), DateTime(2020, 1, 2); disable_cache = true)
+    ds = CDFDataset(only(files))
+    @test "BR" in keys(ds) && "BT" in keys(ds)
+end
+
 @testset "Datasets" begin
     id = "AC_H2_MFI"
     res = CDAWeb.get_dataset(id)
