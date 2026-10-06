@@ -1,3 +1,7 @@
+_join_vars(variables::AbstractString) = variables
+# Sorted so any order of the same variables shares one cache entry
+_join_vars(variables) = join(sort!(unique(variables)), ",")
+
 # Internal function to read data from CDAS
 function _cdas_read(key; dataview = "sp_phys", query...)
     url = "$(ENDPOINT)/$(dataview)/$(key)"
@@ -125,7 +129,6 @@ Get descriptive information about the specified data file for the `dataset`, `va
 See [Get Data](https://cdaweb.gsfc.nasa.gov/WebServices/REST/#Get_Data_GET) for more details.
 """
 function get_data_file_descs(dataset, variables, t0, t1; dataview = "sp_phys", format = "cdf", query...)
-    var_str = variables isa AbstractString ? variables : join(variables, ",")
-    url = "$(ENDPOINT)/$(dataview)/datasets/$(dataset)/data/$(_format_time(t0)),$(_format_time(t1))/$(var_str)"
+    url = "$(ENDPOINT)/$(dataview)/datasets/$(dataset)/data/$(_format_time(t0)),$(_format_time(t1))/$(_join_vars(variables))"
     return _json_read1(_http_get(url; query = (; format, query...)))
 end
