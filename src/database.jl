@@ -32,13 +32,18 @@ function _get_cache_db(orig::Bool)
             db_file = _get_cache_db_file(orig)
             db = SQLite.DB(db_file)
 
-            # Wait for other processes' writes instead of failing with SQLITE_BUSY;
-            # first, since switching a fresh file to WAL already takes a lock
+            # Wait for other processes' writes instead of failing with SQLITE_BUSY
             SQLite.busy_timeout(db, 10_000)
-            # Enable WAL mode for better concurrency
+            # Not WAL: it needs shared memory, so it breaks when the cache is on a network
+            # filesystem shared across hosts (e.g. an HPC home). The mode persists in the file,
+            # so set it explicitly to convert caches created in WAL mode. Leaving WAL fails at once
+            # (no busy wait) while another connection is open; the file then stays WAL until a later open.
             # `SQLite.execute` finalizes at once; a pending PRAGMA row would block COMMIT
-            SQLite.execute(db, "PRAGMA journal_mode=WAL")
-            SQLite.execute(db, "PRAGMA synchronous=NORMAL")
+            try
+                SQLite.execute(db, "PRAGMA journal_mode=DELETE")
+            catch e
+                e isa SQLite.SQLiteException || rethrow()
+            end
 
             # Create schema if not exists (using INTEGER for Unix timestamps)
             schema = if orig

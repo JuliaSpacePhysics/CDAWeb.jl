@@ -43,7 +43,7 @@ _masters_path() = joinpath(BASE_PATH[], "masters")
 _master_last_modified() = joinpath(_masters_path(), ".last_modified")
 _data_cache_path() = joinpath(BASE_PATH[], "data")
 
-__init__() = (BASE_PATH[] = joinpath(homedir(), ".cdaweb"))
+__init__() = (BASE_PATH[] = get(ENV, "CDAWEB_DIR", joinpath(homedir(), ".cdaweb")))
 
 include("master.jl")
 include("operation.jl")

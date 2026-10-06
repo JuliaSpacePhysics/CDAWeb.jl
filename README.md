@@ -35,9 +35,9 @@ files = get_data_files("AC_H0_MFI", "BGSEc", "2023-01-01", "2023-01-02";
 **Agent skill**: at terminal, run `npx skills add JuliaSpacePhysics/CDAWeb.jl`
 
 - Local cache system to avoid redundant downloads with fine-grained control
-  - **Automatic cache management**: Metadata persisted to disk on exit, loaded on startup (Cache location: `~/.cdaweb/data/`)
+  - **Automatic cache management**: Downloaded files and their index live in `~/.cdaweb/`, or `$CDAWEB_DIR` if set
   - **Fragment-based caching**: Splits time ranges into fixed-duration fragments (default 24 hours) for efficient reuse across overlapping queries
-  - **Manual cache control**: `CDAWeb.cache_metadata()`, `CDAWeb.clear_cache!()`, and `CDAWeb.persist_cache!()` for explicit management of cache metadata
+  - **Manual cache control**: `CDAWeb.cache_metadata()` and `CDAWeb.clear_cache!()` for explicit management of cache metadata
 - **Efficient data access**: Data and metadata are memory-mapped and lazily represented using [CommonDataFormat.jl](https://github.com/JuliaSpacePhysics/CommonDataFormat.jl)
 
 
