@@ -87,7 +87,8 @@ function find_cached_and_missing(dataset, variable, start_time, stop_time; fragm
     # Split time range into fixed-duration fragments with aligned boundaries for consistent caching
     fragments = TimeRanges(floor(start_time, fragment_period), ceil(stop_time, fragment_period), fragment_period)
 
-    entries = _query(start_time, stop_time, dataset, variable)
+    # A deleted file leaves a gap, so its fragments are refetched
+    entries = filter(e -> isfile(e[3]), _query(start_time, stop_time, dataset, variable))
 
     cached_files = Set{String}()
     missings = Tuple{DateTime,DateTime}[]
