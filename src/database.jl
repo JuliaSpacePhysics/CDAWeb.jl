@@ -32,9 +32,13 @@ function _get_cache_db(orig::Bool)
             db_file = _get_cache_db_file(orig)
             db = SQLite.DB(db_file)
 
+            # Wait for other processes' writes instead of failing with SQLITE_BUSY;
+            # first, since switching a fresh file to WAL already takes a lock
+            SQLite.busy_timeout(db, 10_000)
             # Enable WAL mode for better concurrency
-            DBInterface.execute(db, "PRAGMA journal_mode=WAL")
-            DBInterface.execute(db, "PRAGMA synchronous=NORMAL")
+            # `SQLite.execute` finalizes at once; a pending PRAGMA row would block COMMIT
+            SQLite.execute(db, "PRAGMA journal_mode=WAL")
+            SQLite.execute(db, "PRAGMA synchronous=NORMAL")
 
             # Create schema if not exists (using INTEGER for Unix timestamps)
             schema = if orig
@@ -101,73 +105,34 @@ function _query(start_time, stop_time, dataset, variable...)
     end
 end
 
-"""Update orig cache metadata in SQLite database (process-safe, atomic)."""
-function _update_cache!(dataset, start_times, end_times, files)
-    db = _get_cache_db(true)
-    # DBInterface.execute(db, "BEGIN TRANSACTION")
-
-    # Remove overlapping entries first
-    for (st, et) in zip(start_times, end_times)
-        st_unix = _datetime_to_unix(st)
-        et_unix = _datetime_to_unix(et)
-        DBInterface.execute(
-            db, """
-                DELETE FROM cache
-                WHERE dataset = ?
-                AND start_time >= ?
-                AND end_time <= ?
-            """, (dataset, st_unix, et_unix)
-        )
+"""Replace cache entries inside each new entry's time range, atomically."""
+function _update_cache!(start_times, end_times, files, dataset, variable...)
+    key = (dataset, variable...)
+    cols = join(_key_columns(variable), ", ")
+    placeholders = join(fill("?", length(key) + 3), ", ")
+    unix = _datetime_to_unix
+    lock(_DB_LOCK) do
+        db = _get_cache_db(isempty(variable))
+        # Not `SQLite.transaction`, which sets `synchronous = OFF` on the connection
+        SQLite.execute(db, "BEGIN IMMEDIATE")
+        try
+            for (st, et) in zip(start_times, end_times)
+                SQLite.execute(
+                    db, "DELETE FROM cache WHERE $(_key_match(variable)) AND start_time >= ? AND end_time <= ?",
+                    (key..., unix(st), unix(et))
+                )
+            end
+            for (st, et, file) in zip(start_times, end_times, files)
+                SQLite.execute(
+                    db, "INSERT OR REPLACE INTO cache ($cols, start_time, end_time, path) VALUES ($placeholders)",
+                    (key..., unix(st), unix(et), file)
+                )
+            end
+            SQLite.execute(db, "COMMIT")
+        catch
+            SQLite.execute(db, "ROLLBACK")
+            rethrow()
+        end
     end
-
-    # Insert new entries
-    for (st, et, file) in zip(start_times, end_times, files)
-        st_unix = _datetime_to_unix(st)
-        et_unix = _datetime_to_unix(et)
-        DBInterface.execute(
-            db, """
-                INSERT OR REPLACE INTO cache (dataset, start_time, end_time, path)
-                VALUES (?, ?, ?, ?)
-            """, (dataset, st_unix, et_unix, file)
-        )
-    end
-
-    # return DBInterface.execute(db, "COMMIT")
-    return
-end
-
-"""Update variable cache metadata in SQLite database (process-safe, atomic)."""
-function _update_cache!(dataset, variable, start_times, end_times, files)
-    db = _get_cache_db(false)
-    # DBInterface.execute(db, "BEGIN TRANSACTION")
-
-    # Remove overlapping entries first
-    for (st, et) in zip(start_times, end_times)
-        st_unix = _datetime_to_unix(st)
-        et_unix = _datetime_to_unix(et)
-        DBInterface.execute(
-            db, """
-                DELETE FROM cache
-                WHERE dataset = ?
-                AND variable = ?
-                AND start_time >= ?
-                AND end_time <= ?
-            """, (dataset, variable, st_unix, et_unix)
-        )
-    end
-
-    # Insert new entries
-    for (st, et, file) in zip(start_times, end_times, files)
-        st_unix = _datetime_to_unix(st)
-        et_unix = _datetime_to_unix(et)
-        DBInterface.execute(
-            db, """
-                INSERT OR REPLACE INTO cache (dataset, variable, start_time, end_time, path)
-                VALUES (?, ?, ?, ?, ?)
-            """, (dataset, variable, st_unix, et_unix, file)
-        )
-
-    end
-    # return DBInterface.execute(db, "COMMIT")
     return
 end

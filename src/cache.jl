@@ -94,7 +94,7 @@ function _add_files_to_cache!(requested_start, requested_stop, files, dataset, a
     end
 
     start_times, end_times = _expand_time_ranges(timeranges, requested_start, requested_stop)
-    _update_cache!(dataset, args..., start_times, end_times, files)
+    _update_cache!(start_times, end_times, files, dataset, args...)
     return
 end
 
