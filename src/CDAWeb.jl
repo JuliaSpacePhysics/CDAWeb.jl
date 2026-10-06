@@ -25,6 +25,7 @@ export find_datasets
 export @cda_str, CDAWebProduct, CDAWebProducts
 
 const _METADATA_CACHE = Dict{String, Any}()
+const _METADATA_LOCK = ReentrantLock()
 
 const master_url = "https://spdf.gsfc.nasa.gov/pub/software/cdawlib/0MASTERS/master.tar"
 const CDAWEB_BASE_URL = "https://cdaweb.gsfc.nasa.gov/WS/cdasr/1"

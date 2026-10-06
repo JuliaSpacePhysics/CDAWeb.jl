@@ -2,7 +2,7 @@
 
 """Clear the in-memory metadata cache (datasets, variables, etc.)."""
 function clear_metadata_cache!()
-    empty!(_METADATA_CACHE)
+    lock(() -> empty!(_METADATA_CACHE), _METADATA_LOCK)
     return
 end
 
@@ -11,8 +11,12 @@ _json_read1(resp) = first(values(JSON.parse(String(resp.body))))
 
 function get_cached_json(url; use_cache = true, query...)
     return if use_cache
-        result = get!(_METADATA_CACHE, url) do
-            _json_read1(_http_get(url))
+        # Fetched outside the lock so one slow request doesn't block other lookups;
+        # concurrent misses may fetch twice, and the first stored result wins
+        result = lock(() -> get(_METADATA_CACHE, url, nothing), _METADATA_LOCK)
+        if isnothing(result)
+            fetched = _json_read1(_http_get(url))
+            result = lock(() -> get!(_METADATA_CACHE, url, fetched), _METADATA_LOCK)
         end
         _filter_metadata(result, query)
     else
