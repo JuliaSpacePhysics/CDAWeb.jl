@@ -139,6 +139,14 @@ end
     end
 end
 
+@testset "Deleted cached file is refetched" begin
+    with_temp_cache() do
+        args = ("OMNI_COHO1HR_MERGED_MAG_PLASMA", "V", DateTime(2020, 1, 1), DateTime(2020, 1, 2))
+        rm(only(get_data_files(args...)))
+        @test all(isfile, get_data_files(args...))
+    end
+end
+
 @testset "Processed files for several variables" begin
     files = get_data_files("OMNI_COHO1HR_MERGED_MAG_PLASMA", ["BR", "BT"], DateTime(2020, 1, 1), DateTime(2020, 1, 2); disable_cache = true)
     ds = CDFDataset(only(files))
