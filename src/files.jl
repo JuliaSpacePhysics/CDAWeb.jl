@@ -6,7 +6,8 @@ function _download_file(url, dataset, args...; dir=joinpath(_data_cache_path(), 
     output = joinpath(dir, _filename(url, args...))
     if !isfile(output) || update
         @debug "Downloading $(url) to $(output)"
-        Downloads.download(url, output)
+        tmp = Downloads.download(url, tempname(dir))
+        mv(tmp, output; force = true)
     end
     return output
 end
