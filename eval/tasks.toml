@@ -1,0 +1,38 @@
+# Common research tasks: find the data, fetch it, reduce it to one number.
+# Prompts name what a researcher would, not dataset ids. Answers computed with CDAWeb.jl.
+
+[[task]]
+id = "omni-symh"
+prompt = "What was the minimum SYM-H index during the geomagnetic storm of 2015-03-17 (UT day)? Answer in nT."
+answer = -234.0
+atol = 1.0
+
+[[task]]
+id = "psp-bmax"
+prompt = "From Parker Solar Probe FIELDS magnetometer data at 1-minute cadence, what was the maximum magnetic field magnitude |B| from 2021-04-26 to 2021-05-03 (UT, end exclusive)? Answer in nT."
+answer = 444.35
+rtol = 0.01
+
+[[task]]
+id = "mms-burst-density"
+prompt = "From MMS1 FPI burst-mode ion moments, what was the mean ion number density from 2015-10-16 13:05:00 to 13:08:00 UT? Answer in cm^-3."
+answer = 8.98
+rtol = 0.02
+
+[[task]]
+id = "solo-speed"
+prompt = "From Solar Orbiter SWA-PAS ground-calculated moments, what was the mean proton bulk speed on 2022-03-01 (UT day)? Answer in km/s."
+answer = 458.52
+rtol = 0.01
+
+[[task]]
+id = "themis-spectrogram"
+prompt = "From THEMIS-E ESA full-mode ion energy flux spectra between 2008-02-26 04:00 and 05:00 UT, which energy channel has the highest time-averaged energy flux? Answer with its energy in eV."
+answer = 15737.0
+rtol = 0.05
+
+[[task]]
+id = "rbsp-density"
+prompt = "From Van Allen Probe A EMFISIS-inferred electron density, what was the median density on 2015-03-17 (UT day)? Answer in cm^-3."
+answer = 14.86
+rtol = 0.02

@@ -49,8 +49,6 @@ get_variables("THD_L2_SST")               # Name, ShortDescription, LongDescript
 
 ## Features
 
-**Agent skill**: at terminal, run `npx skills add JuliaSpacePhysics/CDAWeb.jl`
-
 - Local cache system to avoid redundant downloads with fine-grained control
   - **Automatic cache management**: Downloaded files and their index live in `~/.cdaweb/`, or `$CDAWEB_DIR` if set
   - **Fragment-based caching**: Splits time ranges into fixed-duration fragments (default 24 hours) for efficient reuse across overlapping queries
