@@ -3,9 +3,7 @@ _format_time(time::AbstractString) = _format_time(DateTime(time))
 
 # https://github.com/SciQLop/PyISTP/blob/main/pyistp/_impl.py#L16
 
-function _get_data(dataset, var, t0, t1; master_attributes = false, kw...)
-    start_time = DateTime(t0)
-    stop_time = DateTime(t1)
+function _get_data(dataset, var, start_time, stop_time; master_attributes = false, kw...)
     file_paths = get_data_files(dataset, var, start_time, stop_time; kw...)
 
     # Handle case where no data files are available (e.g., 404 error)
