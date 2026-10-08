@@ -29,7 +29,7 @@ using CDAWeb
 using Dates
 
 # Get dataset description
-get_dataset("AC_H0_MFI")
+getmeta(cda"AC_H0_MFI")
 ```
 
 ```@example quick_example

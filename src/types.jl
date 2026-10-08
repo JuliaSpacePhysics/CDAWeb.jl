@@ -1,10 +1,12 @@
 """
     CDAWeb.Dataset(id; direct = false, master_attributes = false)
 
-The CDAWeb dataset `id` (a CDAS id, DOI or SPASE ResourceID); `ds[var]` is its variable.
+The CDAWeb dataset `id`: a CDAS id (`AC_H2_MFI`), DOI (`10.48322/fh85-fj47`) or SPASE ResourceID
+(`spase://NASA/NumericalData/ACE/MAG/L2/PT1H`); `ds[var]` is its variable.
 
 `direct` fetches a variable through CDAWeb's subsetting service rather than indexing the whole
 cached dataset; `master_attributes` (direct only) takes its attributes from the master CDF.
+`getdata` keywords go to [`get_data_files`](@ref).
 """
 struct Dataset <: AbstractDataset
     id::String
@@ -15,67 +17,38 @@ end
 Dataset(id; direct=false, master_attributes=false) = Dataset(_cdas_id(id), direct, master_attributes)
 
 # Data endpoints, cache entries and master CDFs are keyed by the CDAS id
-_cdas_id(id) = startswith(id, r"10\.|spase://") ? String(get_dataset(id).Id) : String(id)
+_cdas_id(id) = startswith(id, r"10\.|spase://") ? String(only(get_datasets(; id)).Id) : String(id)
 
 SpaceDataModel.name(ds::Dataset) = ds.id
-SpaceDataModel.getmeta(ds::Dataset) = get_dataset(ds.id)
+SpaceDataModel.getmeta(ds::Dataset) = only(get_datasets(; id = ds.id))
 SpaceDataModel.remotefiles(ds::Dataset, t0, t1) = _get_file_urls_from_api(ds.id, DateTime(t0), DateTime(t1))
-SpaceDataModel.getdata(ds::Dataset, t0, t1; kw...) = get_dataset(ds.id, t0, t1; clip=true, kw...)
+SpaceDataModel.getdata(ds::Dataset, t0, t1; kw...) = _get_dataset(ds.id, t0, t1; kw...)
 
 function SpaceDataModel.getdata(p::Product{Dataset}, t0, t1; kw...)
     ds = parent(p)
-    return ds.direct ? _get_data(ds.id, p.variable, t0, t1; clip=true, ds.master_attributes, kw...) :
+    return ds.direct ? _get_data(ds.id, p.variable, t0, t1; ds.master_attributes, kw...) :
            getdata(ds, t0, t1; kw...)[p.variable]
 end
 
-function CDAWebProduct(path::AbstractString; kw...)
-    id, var = _split_path(path)
-    ds = Dataset(id; kw...)
-    return isnothing(var) ? ds : ds[var]
-end
-
 """
-    CDAWebProducts{T} <: AbstractVector{T}
-"""
-struct CDAWebProducts{T} <: AbstractVector{T}
-    products::Vector{T}
-end
+    cda"dataset"
+    cda"dataset/variable"
+    cda"dataset/variable1,variable2"
 
-_CDAWebProducts(dataset, params) = CDAWebProducts([CDAWebProduct("$dataset/$p") for p in params])
-
-Base.size(p::CDAWebProducts) = size(p.products)
-Base.getindex(p::CDAWebProducts, i) = getindex(p.products, i)
-Base.summary(io::IO, ps::CDAWebProducts) = print(io, length(ps), "-element CDAWebProducts")
-
-(ps::CDAWebProducts)(args...; kw...) = map(p -> p(args...; kw...), ps.products)
-
-"""
-    cda"dataset/parameter"
-    cda"dataset/parameter1,parameter2"
+`CDAWeb.Dataset(dataset)`, its variable `Product`, or a `Vector` of them.
 
 # Examples
 ```julia
-# Single parameter
-product = cda"OMNI_COHO1HR_MERGED_MAG_PLASMA/flow_speed"
-product(t0 , t1)
-
-# Multiple parameters
-products = cda"OMNI_COHO1HR_MERGED_MAG_PLASMA/flow_speed,Pressure"
-products(t0 , t1)
+B = cda"OMNI_COHO1HR_MERGED_MAG_PLASMA/BR"
+B(t0, t1)
+ps = cda"OMNI_COHO1HR_MERGED_MAG_PLASMA/BR,N"
+getdata.(ps, t0, t1)
 ```
 """
 macro cda_str(s)
-    if contains(s, ",")
-        # Multiple parameters case
-        parts = split(s, "/")
-        if length(parts) < 2
-            error("Invalid format. Expected 'dataset/parameter1,parameter2'")
-        end
-        dataset = join(parts[1:(end - 1)], "/")
-        params = strip.(split(parts[end], ","))
-        return :(_CDAWebProducts($dataset, $params))
-    else
-        # Single parameter case
-        return :(CDAWebProduct($s))
-    end
+    id, vars = _split_path(s)
+    contains(id, ',') && throw(ArgumentError("expected \"dataset/variable1,variable2\", got \"$s\""))
+    isnothing(vars) && return :(Dataset($id))
+    names = String.(strip.(split(vars, ',')))
+    return length(names) == 1 ? :(Dataset($id)[$(only(names))]) : :(let ds = Dataset($id); [ds[v] for v in $names] end)
 end
