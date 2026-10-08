@@ -6,8 +6,8 @@ function clear_metadata_cache!()
     return
 end
 
-# Read the first value from a JSON response
-_json_read1(resp) = first(values(JSON.parse(String(resp.body))))
+# Every CDAS response is `{"Wrapper": [record, ...]}`
+_json_read1(resp) = Vector{JSON.Object{String, Any}}(first(values(JSON.parse(String(resp.body)))))
 
 function get_cached_json(url; use_cache = true, query...)
     return if use_cache
@@ -30,14 +30,14 @@ end
 # `id` may be a CDAS, DOI or SPASE identifier, as the server accepts.
 function _filter_metadata(items, filters)
     isempty(filters) && return items
-    return filter(items) do item
-        all(filters) do (k, v)
-            k == :id && return v in (item["Id"], get(item, "Doi", nothing), get(item, "SpaseResourceId", nothing))
-            val = item[uppercasefirst(String(k))]
-            val isa AbstractArray ? (v in val) : (val == v)
-        end
-    end
+    matchers = [_matcher(k, v) for (k, v) in pairs(filters)]
+    return filter(item -> all(m -> m(item), matchers), items)
 end
+
+_matcher(k, v) = k == :id ?
+    item -> any(f -> isequal(get(item, f, nothing), v), ("Id", "Doi", "SpaseResourceId")) :
+    _field_matcher(uppercasefirst(String(k)), v)
+_field_matcher(field, v) = item -> (val = item[field]; val isa AbstractArray ? v in val : val == v)
 
 """Clear cache entries for a specific dataset (process-safe)."""
 function clear_cache!(dataset)
