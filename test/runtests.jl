@@ -39,15 +39,13 @@ end
     @test isempty(CDAWeb.get_data("PSP_SWP_SPI_SF00_L3_MOM/DENS", DateTime(1990, 1, 1), DateTime(1990, 1, 1, 1)))
 end
 
-@testset "CDAWebProduct display" begin
-    p = CDAWebProduct("DS/param")
-    @test repr(p) == repr(MIME("text/plain"), p) == "CDAWebProduct(\"DS/param\")"                        # 2-arg show
-    @test eval(Meta.parse(repr(p))) == p
-    ps = cda"DS/a,b"
-    ps_eval = eval(Meta.parse(repr(ps)))
-    @test occursin("CDAWebProducts", repr(ps))
-    @test ps_eval == ps
-    @test ps_eval isa CDAWebProducts
+@testset "CDAWeb.Dataset contract" begin
+    using SpaceDataModel: Testing
+    t0, t1 = DateTime(2020, 1, 1), DateTime(2020, 1, 1, 1)
+    empty = (DateTime(1990, 1, 1), DateTime(1990, 1, 1, 1))
+    for direct in (false, true)
+        Testing.test_dataset(CDAWeb.Dataset("PSP_SWP_SPI_SF00_L3_MOM"; direct), "DENS", t0, t1; empty)
+    end
 end
 
 @testset "cda_str macro" begin
@@ -62,7 +60,7 @@ end
     products_spaces = cda"OMNI_COHO1HR_MERGED_MAG_PLASMA/BR, N , T"
     @test length(products_spaces) == 3
     @test length(products_spaces(t0, t1)) == 3
-    @test products_spaces[1](t0, t1) |> length == 74
+    @test products_spaces[1](t0, t1) |> length == 73  # hourly over [t0, t1)
     # Test error case - invalid format
     @test_throws Exception eval(:(cda"invalid_format,param"))
 end

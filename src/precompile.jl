@@ -15,8 +15,9 @@ PrecompileTools.@setup_workload begin
                 isempty(last(find_cached_and_missing(dataset, t0, t1))) &&
                     isempty(last(find_cached_and_missing(dataset, var, t0, t1))) ||
                     error("precompile workload cache miss")
-                get_dataset(dataset, t0, t1; clip = true)[var][:]
+                get_dataset(dataset, t0, t1; clip=true)[var][:]
                 get_data("$dataset/$var", t0, t1)[:]
+                CDAWebProduct("$dataset/$var")(t0, t1)[:]
             finally
                 # Open SQLite handles must not be serialized into the pkgimage
                 _close_cache_db!()

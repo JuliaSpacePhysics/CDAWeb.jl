@@ -34,22 +34,22 @@ get_dataset("AC_H0_MFI")
 
 ```@example quick_example
 # Get dataset within the time range and display its attributes
-ds = get_data("AC_H0_MFI", "2023-01-01", "2023-01-02")
+ds = getdata(cda"AC_H0_MFI", "2023-01-01", "2023-01-02")
 ds.attrib
 ```
 
 ```@example quick_example
 # Fetch solar wind velocity data from OMNI dataset
-dataset = "OMNI_COHO1HR_MERGED_MAG_PLASMA"
+V = cda"OMNI_COHO1HR_MERGED_MAG_PLASMA/V"
 t0 = DateTime(2020, 1, 1) # Start time
-t1 = DateTime(2020, 1, 2) # End time    
-data = get_data(dataset, "V", t0, t1) # Data is automatically cached for faster subsequent access
+t1 = DateTime(2020, 1, 2) # End time
+data = V(t0, t1) # Data is automatically cached for faster subsequent access
 ```
 
-Retrieve the original monthly data files and clip to the exact requested time range.
+Fetch only the variable through CDAWeb's subsetting service instead of the original data files:
 
 ```@example quick_example
-data = get_data(dataset, t0, t1; clip = true)["V"]
+data = getdata(CDAWeb.Dataset("OMNI_COHO1HR_MERGED_MAG_PLASMA"; direct = true)["V"], t0, t1)
 ```
 
 ## Additional Features
@@ -73,7 +73,7 @@ Retrieve metadata without specifying a time range to access the master CDF file:
 # Update/download the master CDF files
 CDAWeb.update_master_cdf()
 # Returns metadata from the master CDF for the ACE magnetic field dataset
-get_data("AC_H0_MFI", "BGSEc")
+find_master_cdf("AC_H0_MFI")["BGSEc"]
 ```
 
 ### Finding Available Datasets
@@ -117,6 +117,7 @@ CDAWeb.cache_metadata(true)  |> scrollable_table
 ## API Reference
 
 ```@index
+
 ```
 
 ```@autodocs
