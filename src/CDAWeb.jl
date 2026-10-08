@@ -22,7 +22,6 @@ export get_data_files
 export getdata, getmeta, remotefiles
 export clear_cache!, clear_metadata_cache!
 export find_master_cdf
-export find_datasets
 export @cda_str
 
 const _METADATA_CACHE = Dict{String, Any}()

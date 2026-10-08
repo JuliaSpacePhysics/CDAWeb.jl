@@ -70,15 +70,6 @@ CDAWeb.update_master_cdf()
 find_master_cdf("AC_H0_MFI")["BGSEc"]
 ```
 
-### Finding Available Datasets
-
-Search for datasets matching a pattern:
-
-```@example quick_example
-# Find all ACE H0 (high resolution) datasets
-find_datasets("AC_H0")
-```
-
 ### Cache Management
 
 View cache metadata to inspect what data has been cached locally:

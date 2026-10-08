@@ -16,6 +16,7 @@
   - `get_data(id, var, t0, t1)`: `cda"id/var"(t0, t1)`, or `CDAWeb.Dataset(id; direct = true)[var](t0, t1)` for CDAWeb's subsetting service (virtual variables).
   - `get_data(id, t0, t1)`: `cda"id"(t0, t1)`.
   - `get_data(id, var)`: `find_master_cdf(id)[var]`.
+- **Breaking**: `find_datasets`: use `find_master_cdf(id)`.
 
 ### Changed
 
@@ -23,8 +24,6 @@
 - CDAS metadata (the dataset list, a dataset's variables) is cached on disk for a day, so `cda"..."` works offline on cached data.
 - `cda"dataset/var"` returns a `SpaceDataModel` `Product` (a `CDAWeb.Dataset` for a bare dataset id); `cda"dataset/a,b"` a `Vector` of them.
 - `clip = true` and `cda` products restrict data to `[t0, t1)`: a record at `t1` is no longer included.
-
-- `find_datasets` always returns a `Vector`, also for an exact master CDF filename.
 
 ## [0.2.0] - 2025-12-13
 

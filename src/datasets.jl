@@ -1,10 +1,3 @@
-"""
-    find_datasets(name)
-
-Master CDF datasets whose filenames contain `name` (case-insensitive).
-"""
-find_datasets(name) = [CDFDataset(joinpath(_masters_path(), f)) for f in _master_files(name)]
-
 # The master CDF stands in when the range has no data
 function _get_dataset(id, t0, t1; kw...)
     file_paths = _get_data_files(t0, t1, id; kw...)

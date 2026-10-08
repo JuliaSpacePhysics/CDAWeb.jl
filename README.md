@@ -15,7 +15,6 @@ using CDAWeb
 ds = cda"AC_H0_MFI"
 getmeta(ds)
 keys(ds)  # data variable names
-datasets = find_datasets("AC_H0")
 
 # SpaceDataModel datasets/products, cached and clipped to [t0, t1)
 t0, t1 = "2023-01-01", "2023-01-02"
