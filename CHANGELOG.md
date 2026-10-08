@@ -10,6 +10,7 @@
 
 ### Removed
 
+- **Breaking**: exports of `get_dataviews`, `get_instruments`, `get_instrument_types`, `get_observatories`, `get_observatory_groups`, `get_observatory_groups_and_instruments`; qualify them with `CDAWeb.`.
 - `CDAWebProduct` and `CDAWebProducts`: use `cda"..."` or `CDAWeb.Dataset(id)[var]`.
 - `get_dataset`: use `getmeta(cda"id")` for the description and `cda"id"(t0, t1)` for data.
 - `get_data` and the `clip` keyword; data is always restricted to `[t0, t1)`.
