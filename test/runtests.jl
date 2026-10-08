@@ -21,24 +21,6 @@ end
     CDAWeb.find_master_cdf("psp_fld_l2_mag_sc_00")
 end
 
-@testset "CDAWeb data retrieval" begin
-    t_start = DateTime(2020, 1, 1)
-    t_stop = DateTime(2020, 1, 1, 1)
-
-    dataset = CDAWeb.get_data("PSP_SWP_SPI_SF00_L3_MOM", t_start, t_stop)
-    @test "DENS" in keys(dataset)
-    dens = CDAWeb.get_data("PSP_SWP_SPI_SF00_L3_MOM", "DENS", t_start, t_stop)
-    @test dens isa AbstractCDFVariable
-    @test CommonDataModel.name(dens) == "DENS"
-    @test length(parent(dens)) > 0
-
-    dens2 = CDAWeb.get_data("PSP_SWP_SPI_SF00_L3_MOM/DENS", t_start, t_stop)
-    @test dens2 isa AbstractCDFVariable
-    @test CommonDataModel.name(dens2) == CommonDataModel.name(dens)
-
-    @test isempty(CDAWeb.get_data("PSP_SWP_SPI_SF00_L3_MOM/DENS", DateTime(1990, 1, 1), DateTime(1990, 1, 1, 1)))
-end
-
 @testset "CDAWeb.Dataset contract" begin
     using SpaceDataModel: Testing
     t0, t1 = DateTime(2020, 1, 1), DateTime(2020, 1, 1, 1)
@@ -58,17 +40,12 @@ end
     @test ds["Epoch"][1] == t0
     # Test multiple parameters with spaces
     products_spaces = cda"OMNI_COHO1HR_MERGED_MAG_PLASMA/BR, N , T"
-    @test length(products_spaces) == 3
-    @test length(products_spaces(t0, t1)) == 3
-    @test products_spaces[1](t0, t1) |> length == 73  # hourly over [t0, t1)
-    # Test error case - invalid format
-    @test_throws Exception eval(:(cda"invalid_format,param"))
-end
-
-@testset "Error handling" begin
-    @test_throws ArgumentError CDAWeb.get_data("invalid_format", DateTime(2020, 1, 1), DateTime(2020, 1, 2))
-    @test_throws AssertionError CDAWeb.get_data("/DENS", DateTime(2020, 1, 1), DateTime(2020, 1, 2))
-    @test_throws AssertionError CDAWeb.get_data("DATASET/", DateTime(2020, 1, 1), DateTime(2020, 1, 2))
+    @test [p.variable for p in products_spaces] == ["BR", "N", "T"]
+    @test length.(getdata.(products_spaces, t0, t1)) == [73, 73, 73]  # hourly over [t0, t1)
+    @test_throws ArgumentError @macroexpand cda"invalid_format,param"
+    @test_throws AssertionError @macroexpand cda"/DENS"
+    @test_throws AssertionError @macroexpand cda"DATASET/"
+    @test_throws ArgumentError cda"invalid_format"(DateTime(2020, 1, 1), DateTime(2020, 1, 2))
 end
 
 @testset "Fragment-based caching" begin
@@ -91,18 +68,18 @@ end
     @test length(parent(data1)) > 0
 
     # Second request overlapping with first - should use cached fragments
-    data2 = CDAWeb.get_data(
-        "OMNI_COHO1HR_MERGED_MAG_PLASMA", "V",
-        DateTime(2020, 1, 2), DateTime(2020, 1, 4),
+    data2 = getdata(
+        CDAWeb.Dataset("OMNI_COHO1HR_MERGED_MAG_PLASMA"; direct = true)["V"],
+        DateTime(2020, 1, 2), DateTime(2020, 1, 4);
         fragment_period = Day(1)
     )
     @test data2 isa AbstractCDFVariable
     @test length(parent(data2)) > 0
 
     # Third request extending range - should fetch only new fragment
-    data3 = CDAWeb.get_data(
-        "OMNI_COHO1HR_MERGED_MAG_PLASMA", "V",
-        DateTime(2020, 1, 1), DateTime(2020, 1, 5),
+    data3 = getdata(
+        CDAWeb.Dataset("OMNI_COHO1HR_MERGED_MAG_PLASMA"; direct = true)["V"],
+        DateTime(2020, 1, 1), DateTime(2020, 1, 5);
         fragment_period = Day(1)
     )
     @test data3 isa AbstractCDFVariable
@@ -153,32 +130,17 @@ end
 
 @testset "Datasets" begin
     id = "AC_H2_MFI"
-    res = CDAWeb.get_dataset(id)
-    @test res.Id == id
-    @test CDAWeb.get_dataset(res.Doi).Id == id
-    @test CDAWeb.get_dataset(res.SpaseResourceId).Id == id
+    res = getmeta(CDAWeb.Dataset(id))
     @test [d.Id for d in get_datasets(; idPattern = "AC_H2_MFI")] == [id]
     @test CDAWeb.Dataset(res.Doi) == CDAWeb.Dataset(res.SpaseResourceId) == CDAWeb.Dataset(id)
     t0, t1 = DateTime(2020, 1, 1), DateTime(2020, 1, 3)
     @test basename.(remotefiles(CDAWeb.Dataset(id), t0, t1)) == basename.(get_data_files(id, t0, t1))
-
-    CDAWeb.get_dataset("OMNI_COHO1HR_MERGED_MAG_PLASMA", "2020-5-2", "2020-5-3")
-    CDAWeb.get_dataset("OMNI_COHO1HR_MERGED_MAG_PLASMA", "1900-1-1", "1900-1-2")
-end
-
-@testset "Dataset clipping" begin
-    t0 = DateTime(2020, 5, 2)
-    t1 = DateTime(2020, 5, 3)
-    ds_full = get_dataset("OMNI_COHO1HR_MERGED_MAG_PLASMA", t0, t1; clip = false)
-    ds_clipped = get_dataset("OMNI_COHO1HR_MERGED_MAG_PLASMA", t0, t1; clip = true)
-    @test ds_full.attrib == ds_clipped.attrib
-    ds_full["Epoch"] |> Array
-    ds_clipped["Epoch"] |> Array
 end
 
 @testset "Empty dataset" begin
     t0 = DateTime(2021, 8, 8)
     t1 = DateTime(2021, 8, 9)
-    @test get_data("WI_H1_SWE", "Proton_Np_nonlin", t0, t1) isa AbstractCDFVariable
-    @test get_data("WI_H1_SWE", "Proton_Np_nonlin", t0, t1) isa AbstractCDFVariable
+    Np = CDAWeb.Dataset("WI_H1_SWE"; direct = true)["Proton_Np_nonlin"]
+    @test Np(t0, t1) isa AbstractCDFVariable
+    @test Np(t0, t1) isa AbstractCDFVariable
 end

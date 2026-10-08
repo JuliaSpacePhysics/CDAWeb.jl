@@ -3,7 +3,7 @@
   "evals": [
     {
       "id": 0,
-      "prompt": "What are the electron flux variables available in the THEMIS-D SST dataset? I need to know the exact variable names to pass to get_data().",
+      "prompt": "What are the electron flux variables available in the THEMIS-D SST dataset? I need to know the exact variable names to pass to cda\"DATASET/VAR\".",
       "expected_output": "Dataset ID THD_L2_SST identified; electron flux variables listed with names like thd_psef_en_eflux and thd_pseb_en_eflux, with descriptions of full vs burst mode and quality suffix variants.",
       "files": [],
       "assertions": [
@@ -21,7 +21,7 @@
         },
         {
           "name": "get-data-hint",
-          "description": "Output provides actionable guidance on which variable name(s) to pass to get_data()"
+          "description": "Output provides actionable guidance on which variable name(s) to pass to cda\"DATASET/VAR\""
         }
       ]
     },

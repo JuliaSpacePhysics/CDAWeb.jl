@@ -18,12 +18,12 @@ export get_dataviews, get_datasets, get_instruments, get_instrument_types
 export get_observatories, get_observatory_groups, get_observatory_groups_and_instruments
 export get_inventory, get_variables, get_original_file_descs, get_data_file_descs
 # Data access
-export get_data, get_dataset, get_data_files
+export get_data_files
 export getdata, getmeta, remotefiles
 export clear_cache!, clear_metadata_cache!
 export find_master_cdf
 export find_datasets
-export @cda_str, CDAWebProduct, CDAWebProducts
+export @cda_str
 
 const _METADATA_CACHE = Dict{String, Any}()
 const _METADATA_LOCK = ReentrantLock()

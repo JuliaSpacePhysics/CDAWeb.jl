@@ -14,7 +14,7 @@ description: >
 | `get_instruments()`                    | List instruments                |
 | `get_instrument_types()`               | List instrument type categories |
 | `get_datasets(; observatoryGroup=...)` | Datasets for a mission          |
-| `get_dataset("ID")`                    | Full metadata for one dataset   |
+| `getmeta(cda"ID")`                     | Full metadata for one dataset   |
 | `get_variables("ID")`                  | All variable descriptions       |
 
 Values are case-sensitive.
@@ -67,7 +67,7 @@ flux = filter(v -> occursin("flux", lowercase(v.LongDescription)), vars)
 ## Step: Dataset-level metadata
 
 ```julia
-ds = get_dataset("THD_L2_SST")
+ds = getmeta(cda"THD_L2_SST")
 # Useful fields: Id, Label, TimeInterval, PiName, Notes, DatasetLink
 println(ds.Label)
 println("Coverage: ", ds.TimeInterval.Start, " → ", ds.TimeInterval.End)
@@ -79,4 +79,4 @@ Return:
 
 1. **Dataset** — ID, label, time coverage
 2. **Relevant variables** — name and description for each match, grouped by type
-3. **Next step hint** — variable name(s) to pass to `get_data()`
+3. **Next step hint** — variable name(s) for `cda"DATASET/VAR"`

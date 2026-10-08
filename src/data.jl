@@ -3,35 +3,7 @@ _format_time(time::AbstractString) = _format_time(DateTime(time))
 
 # https://github.com/SciQLop/PyISTP/blob/main/pyistp/_impl.py#L16
 
-"""
-    get_data(dataset, variable)
-    get_data(dataset, t0, t1; clip = false, master_attributes = false)
-    get_data(dataset, variable, t0, t1; direct = true, kw...)
-    get_data(path, t0, t1; kw...)
-
-Fetch data for a dataset (variable) within a time range (t0, t1).
-
-If no time range is specified, the master CDF dataset is returned.
-
-A `path`-like format `<dataset>/<variable>` can also be used to specify the dataset and variable.
-
-Set `master_attributes=true` to use master CDF attributes.
-Set `clip=true` to restrict data to `[t0, t1)`.
-Set `direct=false` to fetch the entire dataset first, then index into it.
-
-See [`get_data_files`](@ref) for caching options.
-"""
-function get_data end
-
-function get_data(dataset, var, t0, t1; direct = true, kw...)
-    return if direct
-        _get_data(dataset, var, t0, t1; kw...)
-    else
-        get_dataset(dataset, t0, t1; kw...)[var]
-    end
-end
-
-function _get_data(dataset, var, t0, t1; clip = false, master_attributes = false, kw...)
+function _get_data(dataset, var, t0, t1; master_attributes = false, kw...)
     start_time = DateTime(t0)
     stop_time = DateTime(t1)
     file_paths = get_data_files(dataset, var, start_time, stop_time; kw...)
@@ -42,13 +14,10 @@ function _get_data(dataset, var, t0, t1; clip = false, master_attributes = false
         master_cdf = find_master_cdf(dataset)
         return master_cdf[var]
     end
-    ds = _open(file_paths, start_time, stop_time, clip)
+    ds = cdfopen(file_paths, start_time, stop_time)
     metadata = master_attributes ? find_master_cdf(dataset)[var].attrib : nothing
     return variable(ds, var; metadata)
 end
-
-# `clip` restricts to `[t0, t1)`.
-_open(files, t0, t1, clip) = clip ? cdfopen(files, t0, t1) : cdfopen(files)
 
 function _split_path(path)
     parts = split(path, '/', limit=2)
@@ -58,11 +27,3 @@ function _split_path(path)
     @assert !isempty(variable) "variable name cannot be empty"
     return dataset, variable
 end
-
-function get_data(path::AbstractString, start_time, stop_time; direct=true, kw...)
-    dataset, variable = _split_path(path)
-    return isnothing(variable) ? get_dataset(dataset, start_time, stop_time; kw...) :
-           get_data(dataset, variable, start_time, stop_time; direct, kw...)
-end
-
-get_data(dataset, variable) = find_master_cdf(dataset)[variable]

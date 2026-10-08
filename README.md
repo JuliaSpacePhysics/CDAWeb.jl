@@ -52,5 +52,5 @@ files = get_data_files("AC_H0_MFI", "BGSEc", t0, t1;
 
 ## Elsewhere
 
-- [`speasy`](https://github.com/SciQLop/speasy) pursues a similar goal with a similar `get_data` API and support for multiple data sources including AMDA and CSA. This package, however, focuses on finer control over cached data with better performance and offers straightforward, direct access to those files allowing offline access and reproducibility (see [speasy#237](https://github.com/SciQLop/speasy/issues/237) and [speasy#122](https://github.com/SciQLop/speasy/issues/122)).
+- [`speasy`](https://github.com/SciQLop/speasy) pursues a similar goal with support for multiple data sources including AMDA and CSA. This package, however, focuses on finer control over cached data with better performance and offers straightforward, direct access to those files allowing offline access and reproducibility (see [speasy#237](https://github.com/SciQLop/speasy/issues/237) and [speasy#122](https://github.com/SciQLop/speasy/issues/122)).
 - [xhelio-cdaweb](https://github.com/huangzesen/xhelio-cdaweb): NASA CDAWeb data access for heliophysics — MCP server + Python library
