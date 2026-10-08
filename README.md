@@ -14,6 +14,7 @@ using CDAWeb
 # Get dataset metadata as JSON.Object
 ds = cda"AC_H0_MFI"
 getmeta(ds)
+keys(ds)  # data variable names
 datasets = find_datasets("AC_H0")
 
 # SpaceDataModel datasets/products, cached and clipped to [t0, t1)

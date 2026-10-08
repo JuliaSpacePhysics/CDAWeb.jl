@@ -25,6 +25,7 @@ end
     using SpaceDataModel: Testing
     t0, t1 = DateTime(2020, 1, 1), DateTime(2020, 1, 1, 1)
     empty = (DateTime(1990, 1, 1), DateTime(1990, 1, 1, 1))
+    @test "DENS" in keys(CDAWeb.Dataset("PSP_SWP_SPI_SF00_L3_MOM"))
     for direct in (false, true)
         Testing.test_dataset(CDAWeb.Dataset("PSP_SWP_SPI_SF00_L3_MOM"; direct), "DENS", t0, t1; empty)
     end

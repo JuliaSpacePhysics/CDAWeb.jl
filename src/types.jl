@@ -22,6 +22,7 @@ _cdas_id(id) = startswith(id, r"10\.|spase://") ? String(only(get_datasets(; id)
 SpaceDataModel.name(ds::Dataset) = ds.id
 SpaceDataModel.getmeta(ds::Dataset) = only(get_datasets(; id = ds.id))
 SpaceDataModel.remotefiles(ds::Dataset, t0, t1) = _get_file_urls_from_api(ds.id, DateTime(t0), DateTime(t1))
+Base.keys(ds::Dataset) = get_variable_names(ds.id)
 SpaceDataModel.getdata(ds::Dataset, t0::DateTime, t1::DateTime; kw...) = _get_dataset(ds.id, t0, t1; kw...)
 
 function SpaceDataModel.getdata(p::Product{Dataset}, t0::DateTime, t1::DateTime; kw...)
