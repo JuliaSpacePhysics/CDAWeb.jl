@@ -1,51 +1,56 @@
 """
-    CDAWebProduct{P} <: Function
+    CDAWeb.Dataset(id; direct = false, master_attributes = false)
 
-A lazy specification for retrieving CDAWeb data. When called, it fetches data using
-`get_data` with `clip=true` and `direct=false` by default for better performance.
+The CDAWeb dataset `id`; `ds[var]` is its variable.
 
-See also: [`CDAWebProducts`](@ref), [`@cda_str`](@ref)
+`direct` fetches a variable through CDAWeb's subsetting service rather than indexing the whole
+cached dataset; `master_attributes` (direct only) takes its attributes from the master CDF.
 """
-struct CDAWebProduct{P} <: Function
-    path::P
+struct Dataset <: AbstractDataset
+    id::String
+    direct::Bool
+    master_attributes::Bool
+end
+
+Dataset(id; direct=false, master_attributes=false) = Dataset(String(id), direct, master_attributes)
+
+SpaceDataModel.name(ds::Dataset) = ds.id
+SpaceDataModel.getdata(ds::Dataset, t0, t1; kw...) = get_dataset(ds.id, t0, t1; clip=true, kw...)
+
+function SpaceDataModel.getdata(p::Product{Dataset}, t0, t1; kw...)
+    ds = parent(p)
+    return ds.direct ? _get_data(ds.id, p.variable, t0, t1; clip=true, ds.master_attributes, kw...) :
+           getdata(ds, t0, t1; kw...)[p.variable]
+end
+
+function CDAWebProduct(path::AbstractString; kw...)
+    id, var = _split_path(path)
+    ds = Dataset(id; kw...)
+    return isnothing(var) ? ds : ds[var]
 end
 
 """
     CDAWebProducts{T} <: AbstractVector{T}
 
-A vector-like container of `CDAWebProduct`s that is also callable.
-
-See also: [`CDAWebProduct`](@ref), [`@cda_str`](@ref)
+A callable vector of [`CDAWebProduct`](@ref)s.
 """
 struct CDAWebProducts{T} <: AbstractVector{T}
-    paths::Vector{T}
+    products::Vector{T}
 end
 
-function _CDAWebProducts(dataset, params)
-    prods = map(params) do p
-        CDAWebProduct("$dataset/$p")
-    end
-    return CDAWebProducts(prods)
-end
+_CDAWebProducts(dataset, params) = CDAWebProducts([CDAWebProduct("$dataset/$p") for p in params])
 
-Base.size(p::CDAWebProducts) = size(p.paths)
-Base.getindex(p::CDAWebProducts, i) = getindex(p.paths, i)
+Base.size(p::CDAWebProducts) = size(p.products)
+Base.getindex(p::CDAWebProducts, i) = getindex(p.products, i)
 Base.summary(io::IO, ps::CDAWebProducts) = print(io, length(ps), "-element CDAWebProducts")
-Base.show(io::IO, ps::CDAWebProducts) = print(io, "CDAWebProducts([", join(repr.(ps.paths), ", "), "])")
-Base.show(io::IO, p::CDAWebProduct) = print(io, "CDAWebProduct($(repr(p.path)))")
-Base.show(io::IO, ::MIME"text/plain", p::CDAWebProduct) = print(io, "CDAWebProduct($(repr(p.path)))")
 
-(p::CDAWebProduct)(args...; kw...) = get_data(p.path, args...; clip = true, direct = false, kw...)
-(ps::CDAWebProducts)(args...; kw...) = map(ps.paths) do p
-    p(args...; kw...)
-end
+(ps::CDAWebProducts)(args...; kw...) = map(p -> p(args...; kw...), ps.products)
 
 """
     cda"dataset/parameter"
     cda"dataset/parameter1,parameter2"
 
-String macro to create a CDAWebProduct from a string identifier.
-Supports multiple parameters separated by commas, which returns a CDAWebProducts object (like a vector of CDAWebProduct).
+[`CDAWebProduct`](@ref) from a string identifier; comma-separated parameters give [`CDAWebProducts`](@ref).
 
 # Examples
 ```julia

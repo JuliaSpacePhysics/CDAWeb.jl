@@ -12,20 +12,21 @@ using Pkg; Pkg.add("CDAWeb")
 using CDAWeb
 
 # Get dataset metadata as JSON.Object
-dataset = get_dataset("AC_H0_MFI")
-# Get dataset within the time range
-dataset = get_data("AC_H0_MFI", "2023-01-01", "2023-01-02")
-
-# Fetch variable data with automatic caching
-data = get_data("AC_H0_MFI", "BGSEc", "2023-01-01", "2023-01-02")
-
-# Access master CDF metadata
-get_data("AC_H0_MFI", "BGSEc").metadata["FIELDNAM"]
-
+get_dataset("AC_H0_MFI")
 datasets = find_datasets("AC_H0")
 
+# SpaceDataModel datasets/products, cached and clipped to [t0, t1)
+t0, t1 = "2023-01-01", "2023-01-02"
+ds = getdata(cda"AC_H0_MFI", t0, t1)  # cda"AC_H0_MFI" == CDAWeb.Dataset("AC_H0_MFI"; direct = false)
+B = cda"AC_H0_MFI/BGSEc" # == CDAWeb.Dataset("AC_H0_MFI")["BGSEc"]
+getdata(B, t0, t1)                  # or B(t0, t1)
+getdata.(cda"AC_H0_MFI/BGSEc,Magnitude", t0, t1)
+
+# Access master CDF metadata
+find_master_cdf("AC_H0_MFI")["BGSEc"].metadata["FIELDNAM"]
+
 # Direct access to CDF files with fine-grained control
-files = get_data_files("AC_H0_MFI", "BGSEc", "2023-01-01", "2023-01-02";
+files = get_data_files("AC_H0_MFI", "BGSEc", t0, t1;
                        fragment_period = Hour(12),  # Custom fragment size
                        disable_cache = false)       # Enable/disable caching
 ```

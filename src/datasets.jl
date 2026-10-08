@@ -26,13 +26,12 @@ Get the dataset by `id` between `start_time` and `stop_time`.
 
 If no dataset is available for the specified time range, the corresponding master dataset is returned.
 """
-function get_dataset(id, start_time, stop_time; clip = false, kw...)
+function get_dataset(id, start_time, stop_time; clip=false, kw...)
     t0 = DateTime(start_time)
     t1 = DateTime(stop_time)
     file_paths = _get_data_files(t0, t1, id; kw...)
     return if !isempty(file_paths)
-        ds = cdfopen(file_paths)
-        clip ? view(ds, t0 .. t1) : ds
+        _open(file_paths, t0, t1, clip)
     else
         @warn "No data available for $(id) in range $(t0) to $(t1). Returning master CDF dataset."
         find_master_cdf(id)

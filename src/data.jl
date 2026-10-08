@@ -16,7 +16,7 @@ If no time range is specified, the master CDF dataset is returned.
 A `path`-like format `<dataset>/<variable>` can also be used to specify the dataset and variable.
 
 Set `master_attributes=true` to use master CDF attributes.
-Set `clip=true` to restrict data to exact time bounds.
+Set `clip=true` to restrict data to `[t0, t1)`.
 Set `direct=false` to fetch the entire dataset first, then index into it.
 
 See [`get_data_files`](@ref) for caching options.
@@ -42,27 +42,27 @@ function _get_data(dataset, var, t0, t1; clip = false, master_attributes = false
         master_cdf = find_master_cdf(dataset)
         return master_cdf[var]
     end
-    ds = cdfopen(file_paths)
-
-    data = if master_attributes
-        variable(ds, var; metadata = find_master_cdf(dataset)[var].attrib)
-    else
-        variable(ds, var)
-    end
-    return clip ? data[start_time .. stop_time] : data
+    ds = _open(file_paths, start_time, stop_time, clip)
+    metadata = master_attributes ? find_master_cdf(dataset)[var].attrib : nothing
+    return variable(ds, var; metadata)
 end
 
-function get_data(path::AbstractString, start_time, stop_time; direct = true, kw...)
-    parts = split(path, '/', limit = 2)
-    @assert length(parts) <= 2 "Path should be of the form <dataset> or <dataset>/<variable>"
-    return if length(parts) == 1
-        get_dataset(path, start_time, stop_time; kw...)
-    else
-        dataset, variable = String(parts[1]), String(parts[2])
-        @assert !isempty(dataset) "dataset name cannot be empty"
-        @assert !isempty(variable) "variable name cannot be empty"
-        get_data(dataset, variable, start_time, stop_time; direct, kw...)
-    end
+# `clip` restricts to `[t0, t1)`.
+_open(files, t0, t1, clip) = clip ? cdfopen(files, t0, t1) : cdfopen(files)
+
+function _split_path(path)
+    parts = split(path, '/', limit=2)
+    length(parts) == 1 && return String(path), nothing
+    dataset, variable = String(parts[1]), String(parts[2])
+    @assert !isempty(dataset) "dataset name cannot be empty"
+    @assert !isempty(variable) "variable name cannot be empty"
+    return dataset, variable
+end
+
+function get_data(path::AbstractString, start_time, stop_time; direct=true, kw...)
+    dataset, variable = _split_path(path)
+    return isnothing(variable) ? get_dataset(dataset, start_time, stop_time; kw...) :
+           get_data(dataset, variable, start_time, stop_time; direct, kw...)
 end
 
 get_data(dataset, variable) = find_master_cdf(dataset)[variable]
