@@ -12,15 +12,18 @@ using Pkg; Pkg.add("CDAWeb")
 using CDAWeb
 
 # Get dataset metadata as JSON.Object
-get_dataset("AC_H0_MFI")
+ds = cda"AC_H0_MFI"
+getmeta(ds)
 datasets = find_datasets("AC_H0")
 
 # SpaceDataModel datasets/products, cached and clipped to [t0, t1)
 t0, t1 = "2023-01-01", "2023-01-02"
-ds = getdata(cda"AC_H0_MFI", t0, t1)  # cda"AC_H0_MFI" == CDAWeb.Dataset("AC_H0_MFI"; direct = false)
+getdata(ds, t0, t1)  # cda"AC_H0_MFI" == CDAWeb.Dataset("AC_H0_MFI"; direct = false)
 B = cda"AC_H0_MFI/BGSEc" # == CDAWeb.Dataset("AC_H0_MFI")["BGSEc"]
 getdata(B, t0, t1)                  # or B(t0, t1)
 getdata.(cda"AC_H0_MFI/BGSEc,Magnitude", t0, t1)
+
+remotefiles(cda"AC_H0_MFI", t0, t1)   # original file URLs
 
 # Access master CDF metadata
 find_master_cdf("AC_H0_MFI")["BGSEc"].metadata["FIELDNAM"]

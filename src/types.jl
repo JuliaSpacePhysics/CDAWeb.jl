@@ -1,7 +1,7 @@
 """
     CDAWeb.Dataset(id; direct = false, master_attributes = false)
 
-The CDAWeb dataset `id`; `ds[var]` is its variable.
+The CDAWeb dataset `id` (a CDAS id, DOI or SPASE ResourceID); `ds[var]` is its variable.
 
 `direct` fetches a variable through CDAWeb's subsetting service rather than indexing the whole
 cached dataset; `master_attributes` (direct only) takes its attributes from the master CDF.
@@ -12,9 +12,14 @@ struct Dataset <: AbstractDataset
     master_attributes::Bool
 end
 
-Dataset(id; direct=false, master_attributes=false) = Dataset(String(id), direct, master_attributes)
+Dataset(id; direct=false, master_attributes=false) = Dataset(_cdas_id(id), direct, master_attributes)
+
+# Data endpoints, cache entries and master CDFs are keyed by the CDAS id
+_cdas_id(id) = startswith(id, r"10\.|spase://") ? String(get_dataset(id).Id) : String(id)
 
 SpaceDataModel.name(ds::Dataset) = ds.id
+SpaceDataModel.getmeta(ds::Dataset) = get_dataset(ds.id)
+SpaceDataModel.remotefiles(ds::Dataset, t0, t1) = _get_file_urls_from_api(ds.id, DateTime(t0), DateTime(t1))
 SpaceDataModel.getdata(ds::Dataset, t0, t1; kw...) = get_dataset(ds.id, t0, t1; clip=true, kw...)
 
 function SpaceDataModel.getdata(p::Product{Dataset}, t0, t1; kw...)
@@ -31,8 +36,6 @@ end
 
 """
     CDAWebProducts{T} <: AbstractVector{T}
-
-A callable vector of [`CDAWebProduct`](@ref)s.
 """
 struct CDAWebProducts{T} <: AbstractVector{T}
     products::Vector{T}
@@ -49,8 +52,6 @@ Base.summary(io::IO, ps::CDAWebProducts) = print(io, length(ps), "-element CDAWe
 """
     cda"dataset/parameter"
     cda"dataset/parameter1,parameter2"
-
-[`CDAWebProduct`](@ref) from a string identifier; comma-separated parameters give [`CDAWebProducts`](@ref).
 
 # Examples
 ```julia
