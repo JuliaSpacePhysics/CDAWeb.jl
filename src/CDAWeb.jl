@@ -9,7 +9,7 @@ using CDFDatasets
 using JSON
 using SQLite, DBInterface
 using Tables: columntable
-using SpaceDataModel: SpaceDataModel, TimeRanges, AbstractDataset, Product, getdata
+using SpaceDataModel: SpaceDataModel, TimeRanges, AbstractDataset, Product, getdata, getmeta, remotefiles
 import CDFDatasets as CDF
 using CDFDatasets: var_type, variable, cdfopen
 
@@ -19,7 +19,7 @@ export get_observatories, get_observatory_groups, get_observatory_groups_and_ins
 export get_inventory, get_variables, get_original_file_descs, get_data_file_descs
 # Data access
 export get_data, get_dataset, get_data_files
-export getdata
+export getdata, getmeta, remotefiles
 export clear_cache!, clear_metadata_cache!
 export find_master_cdf
 export find_datasets

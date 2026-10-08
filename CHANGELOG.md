@@ -5,6 +5,7 @@
 ### Added
 
 - `CDAWeb.Dataset <: SpaceDataModel.AbstractDataset`: `getdata(CDAWeb.Dataset(id)[var], t0, t1)`.
+- `getmeta(ds)` and `remotefiles(ds, t0, t1)` for `CDAWeb.Dataset`, which also accepts a DOI or SPASE ResourceID.
 
 ### Changed
 
