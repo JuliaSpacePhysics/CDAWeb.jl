@@ -6,77 +6,9 @@ description: >
 
 # CDAWeb Metadata Exploration
 
-## Useful discovery functions
+API reference: CDAWeb.jl README, section "Discovery" (`joinpath(pkgdir(CDAWeb), "README.md")` or <https://github.com/JuliaSpacePhysics/CDAWeb.jl#discovery>).
 
-| Function                               | Purpose                         |
-| -------------------------------------- | ------------------------------- |
-| `get_observatory_groups()`             | List all mission groups         |
-| `get_instruments()`                    | List instruments                |
-| `get_instrument_types()`               | List instrument type categories |
-| `get_datasets(; observatoryGroup=...)` | Datasets for a mission          |
-| `getmeta(cda"ID")`                     | Full metadata for one dataset   |
-| `get_variables("ID")`                  | All variable descriptions       |
+Filter values must match CDAWeb's spelling exactly; when a guess returns nothing, list the valid values (`get_observatory_groups()`, `get_instrument_types()`, ...) instead of retrying variants.
+Mission datasets usually differ by probe/level/instrument in the `Id` (e.g. `THD_L2_SST`), so filter the returned list by `Id`/`Label` substrings.
+Search variables by `LongDescription` keyword as well as by `Name`; names are terse and mission-specific.
 
-Values are case-sensitive.
-
-## Step: Find the dataset ID
-
-`get_datasets` ANDs these filters: `observatoryGroup`, `instrumentType`, `observatory`, `instrument`, `id`.
-
-```julia
-using CDAWeb
-
-# Filter by one or more parameters
-datasets = get_datasets(; observatoryGroup="THEMIS")
-# More specific:
-# datasets = get_datasets(; observatoryGroup="THEMIS", instrumentType="Particles (space)")
-
-# Narrow further by ID or label keywords
-target = filter(d -> occursin("THD", d.Id) && occursin("SST", d.Id), datasets)
-
-for d in target
-    println(d.Id, " → ", d.Label)
-end
-```
-
-Other useful fields: `Label`, `TimeInterval`.
-
-## Step: Get variable metadata
-
-```julia
-vars = get_variables("THD_L2_SST")
-
-# Show all variables
-for v in vars
-    println(v.Name, ": ", v.LongDescription)
-end
-```
-
-Variable fields: `Name`, `ShortDescription`, `LongDescription`.
-
-Filter for specific quantities:
-
-```julia
-# By name pattern
-elec = filter(v -> occursin("pse", v.Name), vars)
-
-# Or by description keyword
-flux = filter(v -> occursin("flux", lowercase(v.LongDescription)), vars)
-```
-
-## Step: Dataset-level metadata
-
-```julia
-ds = getmeta(cda"THD_L2_SST")
-# Useful fields: Id, Label, TimeInterval, PiName, Notes, DatasetLink
-println(ds.Label)
-println("Coverage: ", ds.TimeInterval.Start, " → ", ds.TimeInterval.End)
-```
-
-## Output format
-
-Return:
-
-1. **Dataset** — ID, label, time coverage
-2. **Relevant variables** — name and description for each match, grouped by type
-3. **Next step hint** — variable name(s) for `cda"DATASET/VAR"`

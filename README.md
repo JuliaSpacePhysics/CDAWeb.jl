@@ -34,6 +34,18 @@ files = get_data_files("AC_H0_MFI", "BGSEc", t0, t1;
                        disable_cache = false)       # Enable/disable caching
 ```
 
+## Discovery
+
+```julia
+get_observatory_groups()   # also get_observatories, get_instruments, get_instrument_types
+get_datasets(; observatoryGroup = "THEMIS", instrumentType = "Particles (space)")
+get_datasets(; idPattern = "THD_L2_.*")   # server-side regex
+get_variables("THD_L2_SST")               # Name, ShortDescription, LongDescription
+```
+
+- `get_datasets` filters are ANDed, case-sensitive, and match exact values. `id`, `observatoryGroup`, `instrumentType`, `observatory`, `instrument` filter a locally cached full list; any other query (`idPattern`, `startDate`, ...) goes to the server.
+- Dataset entries carry `Id`, `Label`, `TimeInterval.Start/End`, `PiName`, `Notes`, `Doi`, `SpaseResourceId`; `getmeta(cda"ID")` returns the same entry.
+
 ## Features
 
 **Agent skill**: at terminal, run `npx skills add JuliaSpacePhysics/CDAWeb.jl`
