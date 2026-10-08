@@ -48,17 +48,6 @@ data = getdata(CDAWeb.Dataset("OMNI_COHO1HR_MERGED_MAG_PLASMA"; direct = true)["
 
 ## Additional Features
 
-### Get Metadata from Web Services
-
-Access metadata directly from CDAWeb's RESTful services:
-
-```@example quick_example
-# Get descriptions of the instrument types that are available from CDAS.
-instrument_types = get_instrument_types()
-```
-
-See also [`get_dataviews`](@ref), [`get_datasets`](@ref), [`get_instruments`](@ref), [`get_instrument_types`](@ref), [`get_observatories`](@ref), [`get_observatory_groups`](@ref), [`get_observatory_groups_and_instruments`](@ref), [`get_original_file_descs`](@ref), and [`get_data_file_descs`](@ref). These functions are convenience wrappers around the CDAS RESTful Web Services, closely matching the original API.
-
 ### Accessing Master CDF Metadata
 
 Retrieve metadata without specifying a time range to access the master CDF file:

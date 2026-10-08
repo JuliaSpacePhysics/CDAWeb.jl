@@ -37,7 +37,7 @@ files = get_data_files("AC_H0_MFI", "BGSEc", t0, t1;
 ## Discovery
 
 ```julia
-get_observatory_groups()   # also get_observatories, get_instruments, get_instrument_types
+CDAWeb.get_observatory_groups()   # also get_observatories, get_instruments, get_instrument_types
 get_datasets(; observatoryGroup = "THEMIS", instrumentType = "Particles (space)")
 get_datasets(; idPattern = "THD_L2_.*")   # server-side regex
 get_variables("THD_L2_SST")               # Name, ShortDescription, LongDescription
