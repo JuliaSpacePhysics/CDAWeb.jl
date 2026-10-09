@@ -12,19 +12,32 @@ struct Dataset <: AbstractDataset
     id::String
     direct::Bool
     master_attributes::Bool
+    metadata::JSON.Object{String, Any}
 end
 
-Dataset(id; direct=false, master_attributes=false) = Dataset(_cdas_id(id), direct, master_attributes)
+Dataset(id::AbstractString; kw...) = Dataset(_dataset_row(id); kw...)
+Dataset(row::JSON.Object; direct=false, master_attributes=false) = Dataset(row["Id"], direct, master_attributes, row)
 
 # Data endpoints, cache entries and master CDFs are keyed by the CDAS id, so aliases resolve to its row
-function _cdas_id(id)
-    rows = get_datasets(; id)
+function _dataset_row(id)
+    rows = get_cached_json(SP_ENDPOINT; id)
     isempty(rows) && throw(ArgumentError("unknown CDAWeb dataset id $(repr(id))"))
-    return String(only(rows).Id)
+    return only(rows)
 end
 
+# `metadata` is a function of `id`
+Base.:(==)(a::Dataset, b::Dataset) = (a.id, a.direct, a.master_attributes) == (b.id, b.direct, b.master_attributes)
+Base.hash(ds::Dataset, h::UInt) = hash((ds.id, ds.direct, ds.master_attributes), h)
+
+function Base.show(io::IO, ds::Dataset)
+    print(io, "CDAWeb.Dataset(", repr(ds.id))
+    ds.direct && print(io, "; direct = true", ds.master_attributes ? ", master_attributes = true" : "")
+    print(io, ")")
+end
+
+Base.show(io::IO, p::Product{Dataset}) = (show(io, parent(p)); print(io, "[", repr(p.variable), "]"))
+
 SpaceDataModel.name(ds::Dataset) = ds.id
-SpaceDataModel.getmeta(ds::Dataset) = only(get_datasets(; id = ds.id))
 SpaceDataModel.remotefiles(ds::Dataset, t0, t1) = _get_file_urls_from_api(ds.id, DateTime(t0), DateTime(t1))
 Base.keys(ds::Dataset) = get_variable_names(ds.id)
 SpaceDataModel.getdata(ds::Dataset, t0::DateTime, t1::DateTime; kw...) = _get_dataset(ds.id, t0, t1; kw...)
