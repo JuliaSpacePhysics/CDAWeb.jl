@@ -53,6 +53,7 @@ include("cache.jl")
 include("database.jl")
 include("datasets.jl")
 include("types.jl")
+include("show.jl")
 include("precompile.jl")
 
 """Get cache metadata"""

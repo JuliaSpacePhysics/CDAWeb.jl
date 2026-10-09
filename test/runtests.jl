@@ -152,6 +152,15 @@ end
     @test "AC_H6_SWI" in [d.id for d in get_datasets("proton")]   # label: "Protons"
     @test "PSP_FLD_L2_MAG_RTN" ∉ [d.id for d in get_datasets("PSP", "magnet")]
     @test "PSP_FLD_L2_MAG_RTN" in [d.id for d in get_datasets("PSP", "magnet*")]
+    # Rows past the screen height Base would truncate to; the PI suffix of labels is dropped
+    psp = get_datasets("PSP", "FIELDS")
+    out = repr("text/plain", psp; context = :limit => true)
+    @test countlines(IOBuffer(out)) == length(psp) + 1 > 30
+    @test !occursin("Bale", out)
+    # Past the cap, a footer counts matches per spacecraft code
+    out = repr("text/plain", get_variables("density"); context = :limit => true)
+    @test count(startswith("  "), eachline(IOBuffer(out))) == CDAWeb._MAX_ROWS
+    @test occursin(r"MMS1 \d+", out)
     vars = values(cda"RBSP-A_DENSITY_EMFISIS-L4")
     @test cda"RBSP-A_DENSITY_EMFISIS-L4/density" in vars && "Epoch" ∉ [v.name for v in vars]
     @test_throws "did you mean AC_H2_MFI" CDAWeb.Dataset("ac_h2_mf")

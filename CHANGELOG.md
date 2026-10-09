@@ -22,6 +22,7 @@
 
 ### Changed
 
+- `display` of `get_datasets` and `get_variables` results and `values(ds)` shows a row each, variables with their descriptions; past 80 rows it counts matches per id prefix to narrow by.
 - **Breaking**: `get_variables(terms...; dataset)` searches variables by terms and returns `CDAWeb.Variable`s; `values(cda"id")` lists a dataset's, `getmeta(cda"id/var")` gives attributes.
 - **Breaking**: `get_datasets(terms...)` searches by terms, replacing CDAS query keywords, and returns `CDAWeb.Dataset`s; `getmeta(ds)` is the former entry.
 - `CDAWeb.Dataset(id)` validates its id against the dataset list.
