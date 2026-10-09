@@ -48,6 +48,7 @@ get_inventory(id, t0, t1)                   # (start, stop) of each interval wit
 - `get_variables` terms must all match one data variable's name or description (`CATDESC`), and `dataset` terms its dataset as above. Past 20 datasets it reads the masters archive (560 MB), downloaded on first use, rather than a master each.
 - When nothing matches, an info line gives each term's matches alone.
 - Time ranges come from CDAS and may extend past the data; `get_inventory` gives the intervals with data.
+- `display` shows a row per result, up to 80, variables under a line per dataset, then the matches per id prefix (spacecraft code) to narrow by; `show(stdout, MIME"text/plain"(), x)` shows all. Search variables with the quantity as terms and the mission, instrument and mode as `dataset`.
 - `keys`, `values` and `getmeta(ds[var])` read the dataset's master CDF, fetched alone (about 100 KB) when not on disk; it may list variables the data files lack, or miss some they have.
 - `getmeta(ds)` is the dataset's CDAS entry: `Id`, `Label`, `TimeInterval.Start/End`, `PiName`, `Notes`, `Doi`, `SpaseResourceId`.
 - CDAS metadata (the dataset list) is cached in `~/.cdaweb/metadata/` for a day.

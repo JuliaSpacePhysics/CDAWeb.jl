@@ -19,12 +19,12 @@ PrecompileTools.@setup_workload begin
                 row = JSON.Object{String, Any}("Id" => dataset)
                 Dataset(row)[var](t0, t1)[:]
                 Dataset(row; direct=true)[var](t0, t1)[:]
-                # Searching, over a stand-in dataset list
+                # Searching and showing results, over a stand-in dataset list
                 _METADATA_CACHE[SP_ENDPOINT] = [JSON.Object{String, Any}(
                     "Id" => dataset, "Label" => "OMNI merged hourly magnetic field, plasma",
                     "ObservatoryGroup" => Any["OMNI (Combined 1AU IP Data; Magnetic and Solar Indices)"],
                     "TimeInterval" => JSON.Object{String, Any}("Start" => "2020-01-01T00:00:00.000Z", "End" => "2020-01-02T00:00:00.000Z"))]
-                get_datasets("OMNI", r"hourly"i)
+                show(IOContext(devnull, :limit => true), MIME"text/plain"(), get_datasets("OMNI", r"hourly"i))
             finally
                 clear_metadata_cache!()
                 _SEARCH_TEXTS[] = nothing
