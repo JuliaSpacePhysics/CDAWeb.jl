@@ -41,7 +41,7 @@ end
     @test ds["Epoch"][1] == t0
     # Test multiple parameters with spaces
     products_spaces = cda"OMNI_COHO1HR_MERGED_MAG_PLASMA/BR, N , T"
-    @test [p.variable for p in products_spaces] == ["BR", "N", "T"]
+    @test [p.name for p in products_spaces] == ["BR", "N", "T"]
     @test length.(getdata.(products_spaces, t0, t1)) == [73, 73, 73]  # hourly over [t0, t1)
     @test_throws ArgumentError @macroexpand cda"invalid_format,param"
     @test_throws AssertionError @macroexpand cda"/DENS"
@@ -136,9 +136,29 @@ end
     @test_throws ArgumentError CDAWeb.Dataset("ac_h2_mf")
     # Virtual: the cached files hold a placeholder record
     @test size(cda"THE_L2_ESA/the_peif_en_efluxQ"("2008-02-26T04:00", "2008-02-26T05:00")) == (32, 38)
+    vars = values(cda"RBSP-A_DENSITY_EMFISIS-L4")
+    @test cda"RBSP-A_DENSITY_EMFISIS-L4/density" in vars && "Epoch" ∉ [v.name for v in vars]
     @test CDAWeb.Dataset(res.Doi) == CDAWeb.Dataset(res.SpaseResourceId) == CDAWeb.Dataset(id)
     t0, t1 = DateTime(2020, 1, 1), DateTime(2020, 1, 3)
     @test basename.(remotefiles(CDAWeb.Dataset(id), t0, t1)) == basename.(get_data_files(id, t0, t1))
+end
+
+@testset "Master CDFs fetched one at a time" begin
+    base = CDAWeb.BASE_PATH[]
+    mktempdir() do dir
+        CDAWeb.BASE_PATH[] = dir
+        empty!(CDAWeb._VARIABLES)
+        try
+            @test "Magnitude" in keys(cda"AC_H2_MFI")
+            @test getmeta(cda"AC_H2_MFI/Magnitude", "UNITS") == "nT"
+            @test readdir(CDAWeb._masters_path()) == ["ac_h2_mfi_00000000_v01.cdf"]
+            # CDAWeb publishes no master for it
+            @test isempty(keys(cda"AC_H4_EPM"))
+        finally
+            CDAWeb.BASE_PATH[] = base
+            empty!(CDAWeb._VARIABLES)
+        end
+    end
 end
 
 @testset "Empty dataset" begin

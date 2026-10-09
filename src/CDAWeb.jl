@@ -10,12 +10,12 @@ import CommonDataFormat
 using JSON
 using SQLite, DBInterface
 using Tables: columntable
-using SpaceDataModel: SpaceDataModel, TimeRanges, AbstractDataset, Product, getdata, getmeta, remotefiles
+using SpaceDataModel: SpaceDataModel, TimeRanges, DataSource, AbstractDataset, NoMetadata, getdata, getmeta, remotefiles
 import CDFDatasets as CDF
-using CDFDatasets: var_type, variable, cdfopen
+using CDFDatasets: variable, cdfopen
 
 # RESTful API wrappers
-export get_datasets, get_inventory, get_variables, get_original_file_descs, get_data_file_descs
+export get_datasets, get_inventory, get_original_file_descs, get_data_file_descs
 # Data access
 export get_data_files
 export getdata, getmeta, remotefiles
@@ -51,7 +51,6 @@ include("files.jl")
 include("cache.jl")
 include("database.jl")
 include("datasets.jl")
-include("initialization.jl")
 include("types.jl")
 include("precompile.jl")
 

@@ -6,7 +6,7 @@
 
 - `CDAWeb.Dataset <: SpaceDataModel.AbstractDataset`: `getdata(CDAWeb.Dataset(id)[var], t0, t1)`.
 - `getmeta(ds)` and `remotefiles(ds, t0, t1)` for `CDAWeb.Dataset`, which also accepts a DOI or SPASE ResourceID.
-- `keys(ds)` lists a dataset's data variables.
+- `keys(ds)` and `values(ds)` list a dataset's data variables: names and `CDAWeb.Variable`s.
 
 ### Removed
 
@@ -17,15 +17,16 @@
   - `get_data(id, var, t0, t1)`: `cda"id/var"(t0, t1)`, or `CDAWeb.Dataset(id; direct = true)[var](t0, t1)` for CDAWeb's subsetting service (virtual variables).
   - `get_data(id, t0, t1)`: `cda"id"(t0, t1)`.
   - `get_data(id, var)`: `find_master_cdf(id)[var]`.
+- **Breaking**: `get_variables`: `values(cda"id")`, displayed with descriptions; `getmeta(cda"id/var")` for attributes.
 - **Breaking**: `find_datasets`: use `find_master_cdf(id)`.
 
 ### Changed
 
 - `CDAWeb.Dataset(id)` validates its id against the dataset list.
-- CDAS metadata (the dataset list, a dataset's variables) is cached on disk for a day, so `cda"..."` works offline on cached data.
+- CDAS metadata (the dataset list) is cached on disk for a day, so `cda"..."` works offline on cached data.
 - Virtual variables (computed by CDAWeb, e.g. THEMIS `the_peif_en_efluxQ`) fetch through CDAWeb's service instead of failing on the placeholder in cached files.
 - **Breaking**: `get_inventory` returns `(start, stop)` `DateTime` tuples.
-- `cda"dataset/var"` returns a `SpaceDataModel` `Product` (a `CDAWeb.Dataset` for a bare dataset id); `cda"dataset/a,b"` a `Vector` of them.
+- `cda"dataset/var"` returns a `CDAWeb.Variable` (a `CDAWeb.Dataset` for a bare dataset id); `cda"dataset/a,b"` a `Vector` of them.
 - `clip = true` and `cda` products restrict data to `[t0, t1)`: a record at `t1` is no longer included.
 
 ## [0.2.0] - 2025-12-13

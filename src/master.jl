@@ -19,20 +19,10 @@ function update_master_cdf(masters_url = master_url; verbose = false)
         rm(_masters_path(); recursive = true, force = true)
         download_and_extract_master_cdf(masters_url)
         write(cache_file, last_modified)
+        lock(() -> empty!(_VARIABLES), _METADATA_LOCK)
         return true
     end
     return false
-end
-
-function build_master_cdf_index()
-    files = filter!(f -> endswith(f, ".cdf"), readdir(_masters_path()))
-    regex = r"^(.+?)_\d+_v\d+\.cdf$"
-    names = map(files) do f
-        # Extract ID from filename (e.g., "wi_at_def_00000000_v01.cdf" -> "WI_AT_DEF")
-        m = match(regex, basename(f))
-        uppercase(m.captures[1])
-    end
-    return Dict(zip(names, files))
 end
 
 # Master CDFs whose filenames contain `name` (case-insensitive)
@@ -62,3 +52,48 @@ function find_master_cdf(name)
     file = _find_master_cdf(name)
     return !isnothing(file) ? file : throw(ArgumentError("No master CDF matches $(name) in $(_masters_path())"))
 end
+
+# master.tar lags the directory it is built from: masters of datasets added since are only there one by one
+function _master_path(id)
+    file = "$(lowercase(id))_00000000_v01.cdf"
+    path = joinpath(_masters_path(), file)
+    isfile(path) && return path
+    resp = try
+        HTTP.get("$(dirname(master_url))/$file")
+    catch e
+        e isa HTTP.StatusError && e.status == 404 && return nothing
+        rethrow()
+    end
+    mkpath(_masters_path())
+    tmp = tempname(_masters_path())
+    write(tmp, resp.body)
+    mv(tmp, path; force = true)
+    return path
+end
+
+# Data variables of a dataset, from its master CDF, which may list variables its data files lack or
+# miss some they have. Read from the raw CDF (about 0.5 ms): CDFDatasets' variables decode data on access.
+const _VarInfo = @NamedTuple{name::String, description::String}
+const _VARIABLES = Dict{String, Vector{_VarInfo}}()
+
+function _variables(id)
+    vars = lock(() -> get(_VARIABLES, id, nothing), _METADATA_LOCK)
+    isnothing(vars) || return vars
+    path = _master_path(id)
+    vars = isnothing(path) ? _VarInfo[] : _data_variables(path)
+    lock(() -> _VARIABLES[id] = vars, _METADATA_LOCK)
+    return vars
+end
+
+function _data_variables(path)
+    cdf = CommonDataFormat.CDFDataset(path)
+    out = _VarInfo[]
+    for name in keys(cdf)
+        a = CommonDataFormat.attrib(cdf[name])
+        get(a, "VAR_TYPE", "") == "data" || continue
+        push!(out, (; name = String(name), description = _squeeze(string(get(a, "CATDESC", "")))))
+    end
+    return out
+end
+
+_squeeze(s) = replace(strip(s), r"\s+" => " ")

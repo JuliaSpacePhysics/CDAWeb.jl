@@ -14,9 +14,9 @@ using CDAWeb
 # Get dataset metadata as JSON.Object
 ds = cda"AC_H0_MFI"
 getmeta(ds)
-keys(ds)  # data variable names
+keys(ds)  # data variable names; values(ds) the variables
 
-# SpaceDataModel datasets/products, cached and clipped to [t0, t1)
+# Data, cached and clipped to [t0, t1)
 t0, t1 = "2023-01-01", "2023-01-02"
 getdata(ds, t0, t1)  # cda"AC_H0_MFI" == CDAWeb.Dataset("AC_H0_MFI"; direct = false)
 B = cda"AC_H0_MFI/BGSEc" # == CDAWeb.Dataset("AC_H0_MFI")["BGSEc"]
@@ -25,8 +25,8 @@ getdata.(cda"AC_H0_MFI/BGSEc,Magnitude", t0, t1)
 
 remotefiles(cda"AC_H0_MFI", t0, t1)   # original file URLs
 
-# Access master CDF metadata
-find_master_cdf("AC_H0_MFI")["BGSEc"].metadata["FIELDNAM"]
+# Variable attributes from the master CDF, without fetching data
+getmeta(B, "FIELDNAM")
 
 # Direct access to CDF files with fine-grained control
 files = get_data_files("AC_H0_MFI", "BGSEc", t0, t1;
@@ -40,10 +40,11 @@ files = get_data_files("AC_H0_MFI", "BGSEc", t0, t1;
 CDAWeb.get_observatory_groups()   # also get_observatories, get_instruments, get_instrument_types
 get_datasets(; observatoryGroup = "THEMIS", instrumentType = "Particles (space)")
 get_datasets(; idPattern = "THD_L2_.*")   # server-side regex
-get_variables("THD_L2_SST")               # Name, ShortDescription, LongDescription
+values(cda"THD_L2_SST")                   # data variables, displayed with descriptions
 ```
 
 - `get_datasets` filters are ANDed, case-sensitive, and match exact values. `id`, `observatoryGroup`, `instrumentType`, `observatory`, `instrument` filter a locally cached full list; any other query (`idPattern`, `startDate`, ...) goes to the server.
+- `keys`, `values` and `getmeta(ds[var])` read the dataset's master CDF, fetched alone (about 100 KB) when not on disk; it may list variables the data files lack, or miss some they have.
 - Dataset entries carry `Id`, `Label`, `TimeInterval.Start/End`, `PiName`, `Notes`, `Doi`, `SpaseResourceId`; `getmeta(cda"ID")` returns the same entry.
 
 ## Features

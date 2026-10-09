@@ -30,13 +30,4 @@ using Dates
 
     get_data_file_descs("OMNI_COHO1HR_MERGED_MAG_PLASMA", ["BR", "BT", "BN"], DateTime(2020, 1, 1), DateTime(2020, 1, 2))
     get_data_file_descs("OMNI_COHO1HR_MERGED_MAG_PLASMA", ["BR", "BT", "BN"], DateTime(2020, 1, 1), DateTime(2020, 1, 2); format = "png")
-
-    @testset "Get variables" begin
-        res = CDAWeb.get_variables("WI_H1_SWE")
-        @test length(res) == 81
-        @test collect(keys(res[1])) == ["Name", "ShortDescription", "LongDescription"]
-        names = CDAWeb.get_variable_names("WI_H1_SWE")
-        @test length(names) == 81
-        @test "Epoch" ∉ names
-    end
 end
