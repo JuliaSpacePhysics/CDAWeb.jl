@@ -143,6 +143,9 @@ end
     @test isempty(get_variables("no such variable"))
     # Variable terms count among the datasets searched
     @test_logs (:info, r"dataset \"OMNI_HRO_1MIN\": 1, \"pitch\": 0") get_variables("pitch"; dataset = "OMNI_HRO_1MIN")
+    # Mission matches first: "Wind" is in every "solar wind" label, ACE is merged into OMNI
+    @test all(startswith("WI_"), [d.id for d in get_datasets("Wind", "SWE")][1:12])
+    @test startswith(first(get_datasets("ACE", "magnetic")).id, "AC_")
     # Words match separately, not as a phrase
     @test "PSP_FLD_L2_MAG_RTN" in [d.id for d in get_datasets("PSP FIELDS magnetometer RTN")]
     # Virtual: the cached files hold a placeholder record
@@ -185,6 +188,17 @@ end
             CDAWeb.BASE_PATH[] = base
             empty!(CDAWeb._VARIABLES)
         end
+    end
+end
+
+@testset "Non-CDF original files" begin
+    # ICON's are NetCDF; the subsetting service serves them as CDF, unlisted files never downloaded
+    with_temp_cache() do
+        t0, t1 = DateTime(2020, 3, 1), DateTime(2020, 3, 1, 1)
+        @test size(cda"ICON_L2-7_IVM-A/ICON_L27_Ion_Temperature"(t0, t1)) == (3600,)
+        @test "ICON_L27_Ion_Density" in keys(getdata(cda"ICON_L2-7_IVM-A", t0, t1))
+        @test !any(endswith(".nc"), readdir(joinpath(CDAWeb._data_cache_path(), "ICON_L2-7_IVM-A")))
+        @test_throws "not CDF" get_data_files("ICON_L2-7_IVM-A", t0, t1)
     end
 end
 

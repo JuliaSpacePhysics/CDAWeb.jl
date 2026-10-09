@@ -1,7 +1,13 @@
-function Base.show(io::IO, ::MIME"text/plain", ds::Dataset)
-    print(io, ds.id, "  ", _range(ds), "  ", _label(ds.metadata))
+Base.show(io::IO, ::MIME"text/plain", ds::Dataset) = _show_row(io, ds, _label(ds.metadata))
+
+function _show_row(io, ds, label)
+    print(io, ds.id, "  ", _range(ds), "  ", label)
     ds.direct && print(io, "  (direct)")
 end
+
+# A few labels run to paragraphs (THEMIS ESA's ~600 chars) that sibling spacecraft repeat; a limited list cuts them
+const _MAX_LABEL = 160
+_short(io, s) = !get(io, :limit, false) || length(s) <= _MAX_LABEL ? s : first(s, _MAX_LABEL - 1) * "…"
 
 # Labels end in " - PI (affiliation)", a third of their length and no help in choosing a dataset
 function _label(row)
@@ -13,9 +19,9 @@ end
 
 _range(ds::Dataset) = (t = ds.metadata["TimeInterval"]; first(t["Start"], 10) * ".." * first(t["End"], 10))
 
-function Base.show(io::IO, m::MIME"text/plain", v::AbstractVector{Dataset})
+function Base.show(io::IO, ::MIME"text/plain", v::AbstractVector{Dataset})
     _show_rows(io, v, "CDAWeb datasets", v) do ds
-        show(io, m, ds)
+        _show_row(io, ds, _short(io, _label(ds.metadata)))
     end
 end
 

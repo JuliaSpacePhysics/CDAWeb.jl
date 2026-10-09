@@ -36,3 +36,29 @@ id = "rbsp-density"
 prompt = "From Van Allen Probe A EMFISIS-inferred electron density, what was the median density on 2015-03-17 (UT day)? Answer in cm^-3."
 answer = 14.86
 rtol = 0.02
+
+# Harder: obscure missions whose archive paths an agent can't recall, month-long spans, non-CDF files
+
+[[task]]
+id = "helios2-speed"
+prompt = "From Helios 2's merged 40.5-second magnetic field and plasma data, what was the mean proton speed on 1976-04-17 (UT day), near its first perihelion? Answer in km/s."
+answer = 743.73
+rtol = 0.01
+
+[[task]]
+id = "voyager2-heliosheath"
+prompt = "From Voyager 2 PLS high-resolution plasma data in the heliosheath, what was the mean radial (R in RTN) proton velocity during 2010 (UT, calendar year)? Answer in km/s."
+answer = 106.89
+rtol = 0.02
+
+[[task]]
+id = "wind-month"
+prompt = "From Wind SWE 92-second proton data (nonlinear fits), what was the median proton bulk speed over October 2003 (UT, whole month)? Answer in km/s."
+answer = 449.74
+rtol = 0.01
+
+[[task]]
+id = "icon-ti"
+prompt = "From ICON IVM-A, what was the median ion temperature on 2020-03-01 (UT day), ignoring quality flags? Answer in K."
+answer = 1440.08
+rtol = 0.02

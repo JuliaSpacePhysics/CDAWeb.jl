@@ -1,7 +1,7 @@
 """
     get_datasets(terms...)
 
-[`CDAWeb.Dataset`](@ref)s every term matches, sorted by id. Matching rules in the README (Discovery).
+[`CDAWeb.Dataset`](@ref)s every term matches. Matching and order in the README (Discovery).
 """
 function get_datasets(terms...)
     ts = _terms(terms)
@@ -31,10 +31,16 @@ function get_variables(terms...; dataset = "")
     return result
 end
 
+# Mission names can be common words ("Wind" in every "solar wind" label), so datasets whose mission or
+# spacecraft match more terms come first, then those of fewer missions (OMNI merges several), then those
+# whose id or instrument match more
 function _dataset_hits(ts)
     rows = get_cached_json(SP_ENDPOINT)
-    texts = _search_texts(rows)
-    return texts, sort!([rows[i] for i in eachindex(rows, texts) if _matches(ts, texts[i])]; by = row -> row["Id"])
+    texts, missions, keys = _search_texts(rows)
+    hits = [i for i in eachindex(rows, texts) if _matches(ts, texts[i])]
+    nmatch(x) = count(t -> occursin(last(t), x), ts)
+    sort!(hits; by = i -> (-nmatch(missions[i]), length(get(rows[i], "ObservatoryGroup", ())), -nmatch(keys[i]), rows[i]["Id"]))
+    return texts, rows[hits]
 end
 
 # Each word of a string term matches on its own, as agents phrase terms like search-box queries
@@ -67,22 +73,25 @@ function _no_match_hint(noun, counts)
     return
 end
 
-# The searched fields of each dataset joined by newlines, rebuilt with the cached list: a term is then one
-# `occursin` per dataset rather than one per field, the array fields parsing as `Vector{Any}`.
+# The searched fields of each dataset joined by newlines, then its mission fields, then id and instrument,
+# rebuilt with the cached list: a term is then one `occursin` per dataset rather than one per field, the
+# array fields parsing as `Vector{Any}`.
 # A term cannot match across fields: a string term matches no newline and `.` does not match one.
 const _SEARCH_TEXTS = Ref{Any}(nothing)
 
 function _search_texts(rows)
     cached = lock(() -> _SEARCH_TEXTS[], _METADATA_LOCK)
-    !isnothing(cached) && first(cached) === rows && return last(cached)::Vector{String}
-    texts = [_search_text(row) for row in rows]
+    !isnothing(cached) && first(cached) === rows && return last(cached)::NTuple{3, Vector{String}}
+    # Parentheses in mission names describe ("OMNI (Combined 1AU IP Data; Magnetic and Solar Indices)")
+    missions = [replace(_search_text(row, ("ObservatoryGroup", "Observatory")), r" *\([^)\n]*\)" => "") for row in rows]
+    texts = ([_search_text(row) for row in rows], missions, [_search_text(row, ("Id", "Instrument")) for row in rows])
     lock(() -> _SEARCH_TEXTS[] = rows => texts, _METADATA_LOCK)
     return texts
 end
 
-function _search_text(row)
+function _search_text(row, fields = ("Id", "Label", "ObservatoryGroup", "Observatory", "Instrument", "InstrumentType"))
     io = IOBuffer()
-    for k in ("Id", "Label", "ObservatoryGroup", "Observatory", "Instrument", "InstrumentType")
+    for k in fields
         v = get(row, k, nothing)
         for x in (v isa AbstractVector ? v : (v,))
             isnothing(x) || (print(io, x); write(io, '\n'))

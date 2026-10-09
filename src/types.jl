@@ -37,7 +37,14 @@ end
 
 SpaceDataModel.name(ds::Dataset) = ds.id
 SpaceDataModel.remotefiles(ds::Dataset, t0, t1) = _get_file_urls_from_api(ds.id, DateTime(t0), DateTime(t1))
-SpaceDataModel.getdata(ds::Dataset, t0::DateTime, t1::DateTime; kw...) = _get_dataset(ds.id, t0, t1; kw...)
+function SpaceDataModel.getdata(ds::Dataset, t0::DateTime, t1::DateTime; kw...)
+    return try
+        _get_dataset(ds.id, t0, t1; kw...)
+    catch e
+        e isa _NotCDF || rethrow()
+        cdfopen(get_data_files(ds.id, keys(ds), t0, t1; kw...), t0, t1)
+    end
+end
 Base.keys(ds::Dataset) = [v.name for v in _variables(ds.id)]
 Base.values(ds::Dataset) = [ds[v.name] for v in _variables(ds.id)]
 Base.getindex(ds::Dataset, var::Union{AbstractString, Symbol}) = Variable(ds, String(var))
@@ -68,7 +75,12 @@ end
 function SpaceDataModel.getdata(v::Variable, t0::DateTime, t1::DateTime; kw...)
     ds = v.dataset
     ds.direct && return _get_data(ds.id, v.name, t0, t1; ds.master_attributes, kw...)
-    data = getdata(ds, t0, t1; kw...)
+    data = try
+        _get_dataset(ds.id, t0, t1; kw...)
+    catch e
+        e isa _NotCDF || rethrow()
+        return _get_data(ds.id, v.name, t0, t1; kw...)
+    end
     return _is_virtual(data, v.name) ? _get_data(ds.id, v.name, t0, t1; kw...) : data[v.name]
 end
 

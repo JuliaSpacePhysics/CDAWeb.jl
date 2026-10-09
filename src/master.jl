@@ -58,6 +58,10 @@ function _master_path(id)
     file = "$(lowercase(id))_00000000_v01.cdf"
     path = joinpath(_masters_path(), file)
     isfile(path) && return path
+    # Archive filenames keep mixed case (rbsp-a_density_emfisis-L4_...); only case-insensitive filesystems find them by the lowercase name
+    files = isdir(_masters_path()) ? readdir(_masters_path()) : String[]
+    i = findfirst(f -> lowercase(f) == file, files)
+    isnothing(i) || return joinpath(_masters_path(), files[i])
     resp = try
         HTTP.get("$(dirname(master_url))/$file")
     catch e
