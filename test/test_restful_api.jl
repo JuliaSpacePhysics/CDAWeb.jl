@@ -24,7 +24,7 @@ using Dates
     @test length(ogis) > 0
 
     res = get_inventory("OMNI_COHO1HR_MERGED_MAG_PLASMA", DateTime(2020, 1, 1), DateTime(2020, 1, 2))
-    @test length(res) > 0
+    @test first(only(res)) <= DateTime(2020, 1, 1) < last(only(res))
 
     get_original_file_descs("OMNI_COHO1HR_MERGED_MAG_PLASMA", DateTime(2020, 1, 1), DateTime(2020, 2, 1))
 

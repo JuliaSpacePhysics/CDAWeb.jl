@@ -65,14 +65,15 @@ get_observatory_groups_and_instruments(; query...) = _cdas_read("observatoryGrou
 """
     get_inventory(dataset, t0, t1; dataview = "sp_phys")
 
-Get descriptions of the available inventory for the `dataset`.
-
-See [Details](https://cdaweb.gsfc.nasa.gov/WebServices/REST/WebServices.html#Get_Inventory).
+`(start, stop)` `DateTime`s of the intervals of `dataset` with data overlapping `[t0, t1]`, whole as CDAS reports them.
 """
 function get_inventory(dataset, t0, t1; dataview = "sp_phys")
     url = "$(ENDPOINT)/$(dataview)/datasets/$(dataset)/inventory/$(_format_time(t0)),$(_format_time(t1))"
-    return _json_read1(_http_get(url))
+    intervals = get(only(_json_read1(_http_get(url))), "TimeInterval", ())
+    return NTuple{2, DateTime}[(_cdas_time(t["Start"]), _cdas_time(t["End"])) for t in intervals]
 end
+
+_cdas_time(s) = DateTime(chopsuffix(s, "Z"))
 
 """
     get_variables(dataset)

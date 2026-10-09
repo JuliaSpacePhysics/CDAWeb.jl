@@ -24,6 +24,7 @@
 - `CDAWeb.Dataset(id)` validates its id against the dataset list.
 - CDAS metadata (the dataset list, a dataset's variables) is cached on disk for a day, so `cda"..."` works offline on cached data.
 - Virtual variables (computed by CDAWeb, e.g. THEMIS `the_peif_en_efluxQ`) fetch through CDAWeb's service instead of failing on the placeholder in cached files.
+- **Breaking**: `get_inventory` returns `(start, stop)` `DateTime` tuples.
 - `cda"dataset/var"` returns a `SpaceDataModel` `Product` (a `CDAWeb.Dataset` for a bare dataset id); `cda"dataset/a,b"` a `Vector` of them.
 - `clip = true` and `cda` products restrict data to `[t0, t1)`: a record at `t1` is no longer included.
 
