@@ -76,24 +76,6 @@ end
 _cdas_time(s) = DateTime(chopsuffix(s, "Z"))
 
 """
-    get_variables(dataset)
-
-Get descriptions of available variables for the `dataset`.
-
-See [Get Variables](https://cdaweb.gsfc.nasa.gov/WebServices/REST/#Get_Variables) for more details.
-"""
-get_variables(dataset) = get_cached_json("$(SP_ENDPOINT)/$(dataset)/variables")
-
-function get_variable_names(dataset)
-    master = _find_master_cdf(dataset)
-    return if isnothing(master)
-        getproperty.(get_variables(dataset), :Name)
-    else
-        filter(k -> var_type(master[k]) == "data", keys(master))
-    end
-end
-
-"""
     get_datasets(; use_cache = true, query...)
 
 Get descriptions of available datasets for the `query`.

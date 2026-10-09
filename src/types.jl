@@ -2,7 +2,7 @@
     CDAWeb.Dataset(id; direct = false, master_attributes = false)
 
 The CDAWeb dataset `id`: a CDAS id (`AC_H2_MFI`), DOI (`10.48322/fh85-fj47`) or SPASE ResourceID
-(`spase://NASA/NumericalData/ACE/MAG/L2/PT1H`); `ds[var]` is its variable.
+(`spase://NASA/NumericalData/ACE/MAG/L2/PT1H`); `ds[var]` is its [`CDAWeb.Variable`](@ref).
 
 `direct` fetches a variable through CDAWeb's subsetting service rather than indexing the whole
 cached dataset; `master_attributes` (direct only) takes its attributes from the master CDF.
@@ -35,18 +35,41 @@ function Base.show(io::IO, ds::Dataset)
     print(io, ")")
 end
 
-Base.show(io::IO, p::Product{Dataset}) = (show(io, parent(p)); print(io, "[", repr(p.variable), "]"))
-
 SpaceDataModel.name(ds::Dataset) = ds.id
 SpaceDataModel.remotefiles(ds::Dataset, t0, t1) = _get_file_urls_from_api(ds.id, DateTime(t0), DateTime(t1))
-Base.keys(ds::Dataset) = get_variable_names(ds.id)
 SpaceDataModel.getdata(ds::Dataset, t0::DateTime, t1::DateTime; kw...) = _get_dataset(ds.id, t0, t1; kw...)
+Base.keys(ds::Dataset) = [v.name for v in _variables(ds.id)]
+Base.values(ds::Dataset) = [ds[v.name] for v in _variables(ds.id)]
+Base.getindex(ds::Dataset, var::Union{AbstractString, Symbol}) = Variable(ds, String(var))
 
-function SpaceDataModel.getdata(p::Product{Dataset}, t0::DateTime, t1::DateTime; kw...)
-    ds = parent(p)
-    ds.direct && return _get_data(ds.id, p.variable, t0, t1; ds.master_attributes, kw...)
+"""
+    CDAWeb.Variable(dataset, name)
+
+The variable `name` of a [`CDAWeb.Dataset`](@ref), `dataset[name]`.
+"""
+struct Variable <: DataSource
+    dataset::Dataset
+    name::String
+end
+
+Base.:(==)(a::Variable, b::Variable) = a.dataset == b.dataset && a.name == b.name
+Base.hash(v::Variable, h::UInt) = hash((v.dataset, v.name), h)
+Base.show(io::IO, v::Variable) = (show(io, v.dataset); print(io, "[", repr(v.name), "]"))
+
+SpaceDataModel.name(v::Variable) = v.name
+
+function SpaceDataModel.getmeta(v::Variable)
+    path = _master_path(v.dataset.id)
+    isnothing(path) && return NoMetadata()
+    cdf = CommonDataFormat.CDFDataset(path)
+    return v.name in keys(cdf) ? CommonDataFormat.attrib(cdf[v.name]) : NoMetadata()
+end
+
+function SpaceDataModel.getdata(v::Variable, t0::DateTime, t1::DateTime; kw...)
+    ds = v.dataset
+    ds.direct && return _get_data(ds.id, v.name, t0, t1; ds.master_attributes, kw...)
     data = getdata(ds, t0, t1; kw...)
-    return _is_virtual(data, p.variable) ? _get_data(ds.id, p.variable, t0, t1; kw...) : data[p.variable]
+    return _is_virtual(data, v.name) ? _get_data(ds.id, v.name, t0, t1; kw...) : data[v.name]
 end
 
 # CDAWeb computes virtual variables (e.g. THEMIS ESA quality-filtered spectra) on request: files hold
@@ -63,7 +86,7 @@ end
     cda"dataset/variable"
     cda"dataset/variable1,variable2"
 
-`CDAWeb.Dataset(dataset)`, its variable `Product`, or a `Vector` of them.
+`CDAWeb.Dataset(dataset)`, its [`CDAWeb.Variable`](@ref), or a `Vector` of them.
 
 # Examples
 ```julia
