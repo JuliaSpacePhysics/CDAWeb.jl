@@ -1,4 +1,5 @@
-_filename(url, variable) = "$(variable)_$(basename(url))"
+# Joined variable names can pass the 255-byte filename limit (a whole dataset of ICON's runs to kilobytes)
+_filename(url, variables) = "$(length(variables) > 64 ? string(hash(variables); base = 62) : variables)_$(basename(url))"
 _filename(url) = basename(url)
 
 function _download_file(url, dataset, args...; dir=joinpath(_data_cache_path(), dataset), update=false)
@@ -50,9 +51,23 @@ function _get_file_urls_from_api(args...; status_exception=false, kw...)::Vector
     end
 end
 
+# CDFDatasets reads only CDF, yet some datasets' original files are not (ICON's are NetCDF); CDAWeb's
+# subsetting service serves any dataset as CDF. Found on listing, before downloading, and remembered.
+struct _NotCDF <: Exception
+    dataset::String
+end
+const _NOT_CDF = Set{String}()
+
+Base.showerror(io::IO, e::_NotCDF) = print(io, e.dataset, "'s original files are not CDF; ",
+    "CDAWeb.Dataset(", repr(e.dataset), ")[var](t0, t1) fetches them as CDF through CDAWeb's subsetting service")
+
 """Fetch files from API, download them, and add to cache."""
 function _fetch_and_cache_files!(t0, t1, args...; disable_cache=false, kw...)
     file_urls = _get_file_urls_from_api(args..., t0, t1; kw...)
+    if length(args) == 1 && !all(endswith(".cdf"), file_urls)
+        lock(() -> push!(_NOT_CDF, only(args)), _METADATA_LOCK)
+        throw(_NotCDF(only(args)))
+    end
     file_paths = _download_file.(file_urls, args...)
     disable_cache || !isempty(file_paths) && _add_files_to_cache!(t0, t1, file_paths, args...)
     return file_paths
@@ -65,7 +80,8 @@ function find_cached_and_missing(dataset, start_time, stop_time; kw...)
     cached_files = String[]
 
     for (entry_start, entry_end, path) in _query(start_time, stop_time, dataset)
-        !isfile(path) && return cached_files, [(start_time, stop_time)]
+        # A non-CDF file, cached before `_NotCDF` existed, counts as missing so the listing finds it out
+        (!isfile(path) || !endswith(path, ".cdf")) && return cached_files, [(start_time, stop_time)]
         if entry_start > current_time
             # Gap found - need to fetch missing range
             return cached_files, [(start_time, stop_time)]
@@ -153,6 +169,7 @@ end
 
 function _get_data_files(start_time, stop_time, dataset, args...; disable_cache=false, find_options=(;), kw...)
     dataset = any(islowercase, dataset) ? uppercase(dataset) : dataset
+    isempty(args) && lock(() -> dataset in _NOT_CDF, _METADATA_LOCK) && throw(_NotCDF(dataset))
     if disable_cache
         return _fetch_and_cache_files!(start_time, stop_time, dataset, args...; disable_cache, kw...)
     end

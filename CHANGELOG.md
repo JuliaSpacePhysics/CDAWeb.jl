@@ -28,6 +28,8 @@
 - **Breaking**: `CDAWeb.Dataset(id)` validates its id against the dataset list.
 - CDAS metadata (the dataset list) is cached on disk for a day, so `cda"..."` works offline on cached data.
 - Virtual variables (computed by CDAWeb, e.g. THEMIS `the_peif_en_efluxQ`) fetch through CDAWeb's service instead of failing on the placeholder in cached files.
+- Datasets whose original files are not CDF (ICON's are NetCDF) fetch through CDAWeb's service, which serves them as CDF, instead of failing to read the files.
+- `get_datasets` and `get_variables` list datasets whose mission or spacecraft match more terms first, single-mission before merged (OMNI).
 - **Breaking**: `get_inventory` returns `(start, stop)` `DateTime` tuples.
 - **Breaking**: `cda"dataset/var"` returns a `CDAWeb.Variable` (a `CDAWeb.Dataset` for a bare dataset id); `cda"dataset/a,b"` a `Vector` of them.
 - **Breaking**: `clip = true` and `cda` products restrict data to `[t0, t1)`: a record at `t1` is no longer included.

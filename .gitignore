@@ -6,3 +6,4 @@ Manifest*.toml
 /docs/build/
 .CondaPkg
 /eval/results/
+/eval/__pycache__/

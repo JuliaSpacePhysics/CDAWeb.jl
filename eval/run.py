@@ -17,23 +17,25 @@ from pathlib import Path
 EVAL = Path(__file__).resolve().parent
 
 ARMS = {
-    "cdaweb": f"Use Julia with CDAWeb.jl (README: {EVAL.parent / 'README.md'}): `julia --project={EVAL}` has it, with Dates, Statistics and LinearAlgebra.",
+    # The README preloaded, as a skill or CLAUDE.md would put it: no turn spent reading it
+    "cdaweb": f"Use Julia with CDAWeb.jl: `julia --project={EVAL}` has it, with Dates, Statistics and LinearAlgebra. Its README:\n\n{(EVAL.parent / 'README.md').read_text()}",
     "baseline": "Use any tools or libraries except CDAWeb.jl; install what you need.",
 }
-# The user's global instructions apply to these runs; keep them from writing outside the run
-SYSTEM = "This is a benchmark run: do not log side findings or save memories. End your reply with a line `ANSWER: <number>`."
+SYSTEM = "End your reply with a line `ANSWER: <number>`."
 
 
-def run(task, arm, model, outdir):
+def run(task, arm, model, rep, outdir):
     work = Path(tempfile.mkdtemp(prefix=f"cdaweb-eval-{task['id']}-{arm}-"))
     cmd = ["claude", "-p", f"{ARMS[arm]}\n\n{task['prompt']}", "--model", model,
            "--output-format", "stream-json", "--verbose", "--permission-mode", "bypassPermissions",
-           "--no-session-persistence", "--append-system-prompt", SYSTEM]
+           "--no-session-persistence", "--append-system-prompt", SYSTEM,
+           # The runner's own CLAUDE.md, hooks and skills would make results depend on whose machine runs them
+           "--setting-sources", "project", "--disable-slash-commands"]
     # Persistent so pyspedas reruns hit its cache, as CDAWeb.jl's ~/.cdaweb does
     env = os.environ | {"SPEDAS_DATA_DIR": str(Path.home() / ".cache" / "cdaweb-eval" / "pydata")}
     t0 = time.time()
     proc = subprocess.run(cmd, cwd=work, env=env, capture_output=True, text=True)
-    log = outdir / f"{task['id']}.{arm}.{model}.jsonl"
+    log = outdir / f"{task['id']}.{arm}.{model}.{rep}.jsonl"
     log.write_text(proc.stdout)
     final = next((json.loads(l) for l in reversed(proc.stdout.splitlines()) if '"type":"result"' in l), {})
     u = final.get("usage", {})
@@ -53,7 +55,7 @@ def run(task, arm, model, outdir):
 def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--tasks", nargs="*", help="task ids (default: all)")
-    p.add_argument("--arms", nargs="*", default=list(ARMS))
+    p.add_argument("--arms", nargs="*", default=list(ARMS), choices=list(ARMS))
     p.add_argument("--models", nargs="*", default=["sonnet"])
     p.add_argument("-n", type=int, default=1, help="repetitions")
     p.add_argument("-j", type=int, default=4, help="concurrent runs")
@@ -61,7 +63,7 @@ def main():
     tasks = [t for t in tomllib.loads((EVAL / "tasks.toml").read_text())["task"] if not args.tasks or t["id"] in args.tasks]
     outdir = EVAL / "results" / time.strftime("%Y%m%d-%H%M%S")
     outdir.mkdir(parents=True)
-    jobs = [(t, a, m) for _ in range(args.n) for t in tasks for a in args.arms for m in args.models]
+    jobs = [(t, a, m, i) for i in range(args.n) for t in tasks for a in args.arms for m in args.models]
     rows = []
     with cf.ThreadPoolExecutor(args.j) as ex, open(outdir / "results.jsonl", "w") as f:
         for fut in cf.as_completed([ex.submit(run, *j, outdir) for j in jobs]):

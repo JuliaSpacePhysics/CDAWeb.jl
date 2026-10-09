@@ -8,6 +8,5 @@ python3 eval/run.py --models sonnet opus -n 3 --tasks psp-bmax
 ```
 
 - `tasks.toml`: prompts and answers. Prompts name what a researcher would (mission, instrument, quantity), not dataset ids.
-- The `cdaweb` arm gets `eval/Project.toml` and the path of the package README, its only documentation.
-- Caches stay warm across runs (`~/.cdaweb`, `SPEDAS_DATA_DIR`), as in real use; the first run of a task downloads its data.
+- The `cdaweb` arm gets `eval/Project.toml` and the package README in its prompt, its only documentation.
 - `results/<time>/`: `results.jsonl` and per-run stream-json transcripts; `eval/trace.py <transcript>` shows where the turns went.
