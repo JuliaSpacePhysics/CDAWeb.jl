@@ -37,15 +37,20 @@ files = get_data_files("AC_H0_MFI", "BGSEc", t0, t1;
 ## Discovery
 
 ```julia
-CDAWeb.get_observatory_groups()   # also get_observatories, get_instruments, get_instrument_types
-get_datasets(; observatoryGroup = "THEMIS", instrumentType = "Particles (space)")
-get_datasets(; idPattern = "THD_L2_.*")   # server-side regex
-values(cda"THD_L2_SST")                   # data variables, displayed with descriptions
+get_datasets("THEMIS", "electric")          # CDAWeb.Datasets
+get_variables("SYM-H"; dataset = "OMNI")    # CDAWeb.Variables
+get_variables("density"; dataset = "MMS1 FPI brst")
+values(cda"THD_L2_SST")                     # data variables, displayed with descriptions
+get_inventory(id, t0, t1)                   # (start, stop) of each interval with data
 ```
 
-- `get_datasets` filters are ANDed, case-sensitive, and match exact values. `id`, `observatoryGroup`, `instrumentType`, `observatory`, `instrument` filter a locally cached full list; any other query (`idPattern`, `startDate`, ...) goes to the server.
+- Each space-separated word of the terms must match a whole word of the dataset's id, label, mission, spacecraft or instrument, case-insensitively: plural `-s`/`-es` allowed, digits may follow (`"MMS"` finds `MMS1`), a trailing `*` makes a prefix (`"magnet*"`). Separators inside a word match any separator (`"SYM-H"` finds `SYM_H`); a `Regex` matches as given.
+- `get_variables` terms must all match one data variable's name or description (`CATDESC`), and `dataset` terms its dataset as above. Past 20 datasets it reads the masters archive (560 MB), downloaded on first use, rather than a master each.
+- When nothing matches, an info line gives each term's matches alone.
+- Time ranges come from CDAS and may extend past the data; `get_inventory` gives the intervals with data.
 - `keys`, `values` and `getmeta(ds[var])` read the dataset's master CDF, fetched alone (about 100 KB) when not on disk; it may list variables the data files lack, or miss some they have.
-- Dataset entries carry `Id`, `Label`, `TimeInterval.Start/End`, `PiName`, `Notes`, `Doi`, `SpaseResourceId`; `getmeta(cda"ID")` returns the same entry.
+- `getmeta(ds)` is the dataset's CDAS entry: `Id`, `Label`, `TimeInterval.Start/End`, `PiName`, `Notes`, `Doi`, `SpaseResourceId`.
+- CDAS metadata (the dataset list) is cached in `~/.cdaweb/metadata/` for a day.
 
 ## Features
 

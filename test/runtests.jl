@@ -132,12 +132,29 @@ end
 @testset "Datasets" begin
     id = "AC_H2_MFI"
     res = getmeta(CDAWeb.Dataset(id))
-    @test [d.Id for d in get_datasets(; idPattern = "AC_H2_MFI")] == [id]
-    @test_throws ArgumentError CDAWeb.Dataset("ac_h2_mf")
+    @test get_datasets("AC_H2_MFI") == [CDAWeb.Dataset(id)]
+    # The label omits the mission; "THEMIS" matches ObservatoryGroup
+    @test "THE_L2_EFI" in [d.id for d in get_datasets("THEMIS", "electric")]
+    # A substring "ace" would match hundreds via "space"
+    @test length(get_datasets("ACE", "magnetic")) < 30
+    # Separators match each other, case-insensitively: `SYM_H`, not `SYM_D`
+    @test get_variables("sym-h"; dataset = "OMNI_HRO_1MIN") == [cda"OMNI_HRO_1MIN/SYM_H"]
+    @test_logs (:info, r"\"pitch\": [1-9]") get_datasets("Wind", "3DP", "pitch")
+    @test isempty(get_variables("no such variable"))
+    # Variable terms count among the datasets searched
+    @test_logs (:info, r"dataset \"OMNI_HRO_1MIN\": 1, \"pitch\": 0") get_variables("pitch"; dataset = "OMNI_HRO_1MIN")
+    # Words match separately, not as a phrase
+    @test "PSP_FLD_L2_MAG_RTN" in [d.id for d in get_datasets("PSP FIELDS magnetometer RTN")]
     # Virtual: the cached files hold a placeholder record
     @test size(cda"THE_L2_ESA/the_peif_en_efluxQ"("2008-02-26T04:00", "2008-02-26T05:00")) == (32, 38)
+    # Whole words: "MAG" skips "magnetometer"; plurals match; `*` makes a prefix
+    @test length(get_datasets("PSP", "MAG")) < 10
+    @test "AC_H6_SWI" in [d.id for d in get_datasets("proton")]   # label: "Protons"
+    @test "PSP_FLD_L2_MAG_RTN" ∉ [d.id for d in get_datasets("PSP", "magnet")]
+    @test "PSP_FLD_L2_MAG_RTN" in [d.id for d in get_datasets("PSP", "magnet*")]
     vars = values(cda"RBSP-A_DENSITY_EMFISIS-L4")
     @test cda"RBSP-A_DENSITY_EMFISIS-L4/density" in vars && "Epoch" ∉ [v.name for v in vars]
+    @test_throws "did you mean AC_H2_MFI" CDAWeb.Dataset("ac_h2_mf")
     @test CDAWeb.Dataset(res.Doi) == CDAWeb.Dataset(res.SpaseResourceId) == CDAWeb.Dataset(id)
     t0, t1 = DateTime(2020, 1, 1), DateTime(2020, 1, 3)
     @test basename.(remotefiles(CDAWeb.Dataset(id), t0, t1)) == basename.(get_data_files(id, t0, t1))
@@ -151,6 +168,7 @@ end
         try
             @test "Magnitude" in keys(cda"AC_H2_MFI")
             @test getmeta(cda"AC_H2_MFI/Magnitude", "UNITS") == "nT"
+            @test cda"AC_H2_MFI/Magnitude" in get_variables("magnitude"; dataset = "AC_H2_MFI")
             @test readdir(CDAWeb._masters_path()) == ["ac_h2_mfi_00000000_v01.cdf"]
             # CDAWeb publishes no master for it
             @test isempty(keys(cda"AC_H4_EPM"))
