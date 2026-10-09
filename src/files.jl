@@ -28,7 +28,8 @@ end
 
 function _build_request_url(dataset, start_time, stop_time)
     start_str = _format_time(start_time)
-    stop_str = _format_time(stop_time)
+    # The API range is closed; subtract the 1 s resolution so a file starting at `stop_time` is excluded
+    stop_str = _format_time(stop_time - Second(1))
     return "$(SP_ENDPOINT)/$(dataset)/orig_data/$(start_str),$(stop_str)/"
 end
 
