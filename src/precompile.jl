@@ -15,9 +15,12 @@ PrecompileTools.@setup_workload begin
                 isempty(last(find_cached_and_missing(dataset, t0, t1))) &&
                     isempty(last(find_cached_and_missing(dataset, var, t0, t1))) ||
                     error("precompile workload cache miss")
+                # `Dataset(id)` checks the id against the dataset list
+                _METADATA_CACHE[SP_ENDPOINT] = [JSON.Object{String, Any}("Id" => dataset)]
                 Dataset(dataset)[var](t0, t1)[:]
                 Dataset(dataset; direct=true)[var](t0, t1)[:]
             finally
+                clear_metadata_cache!()
                 # Open SQLite handles must not be serialized into the pkgimage
                 _close_cache_db!()
             end

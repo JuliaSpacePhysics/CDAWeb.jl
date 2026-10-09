@@ -19,6 +19,7 @@
 
 ### Changed
 
+- `CDAWeb.Dataset(id)` validates its id against the dataset list.
 - `cda"dataset/var"` returns a `SpaceDataModel` `Product` (a `CDAWeb.Dataset` for a bare dataset id); `cda"dataset/a,b"` a `Vector` of them.
 - `clip = true` and `cda` products restrict data to `[t0, t1)`: a record at `t1` is no longer included.
 

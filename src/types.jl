@@ -16,8 +16,12 @@ end
 
 Dataset(id; direct=false, master_attributes=false) = Dataset(_cdas_id(id), direct, master_attributes)
 
-# Data endpoints, cache entries and master CDFs are keyed by the CDAS id
-_cdas_id(id) = startswith(id, r"10\.|spase://") ? String(only(get_datasets(; id)).Id) : String(id)
+# Data endpoints, cache entries and master CDFs are keyed by the CDAS id, so aliases resolve to its row
+function _cdas_id(id)
+    rows = get_datasets(; id)
+    isempty(rows) && throw(ArgumentError("unknown CDAWeb dataset id $(repr(id))"))
+    return String(only(rows).Id)
+end
 
 SpaceDataModel.name(ds::Dataset) = ds.id
 SpaceDataModel.getmeta(ds::Dataset) = only(get_datasets(; id = ds.id))
