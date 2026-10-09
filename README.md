@@ -9,30 +9,35 @@ Julia interface to NASA's CDAWeb RESTful services for accessing space physics da
 
 ```julia
 using Pkg; Pkg.add("CDAWeb")
-using CDAWeb
+using CDAWeb, Dates
 
-# Get dataset metadata as JSON.Object
-ds = cda"AC_H0_MFI"
-getmeta(ds)
-keys(ds)  # data variable names; values(ds) the variables
+display(get_datasets("PSP", "MAG", "RTN"))   # find datasets: id, time range, label
+display(values(cda"OMNI_HRO_1MIN"))         # a dataset's data variables, with descriptions
 
-# Data, cached and clipped to [t0, t1)
-t0, t1 = "2023-01-01", "2023-01-02"
-getdata(ds, t0, t1)  # cda"AC_H0_MFI" == CDAWeb.Dataset("AC_H0_MFI"; direct = false)
-B = cda"AC_H0_MFI/BGSEc" # == CDAWeb.Dataset("AC_H0_MFI")["BGSEc"]
-getdata(B, t0, t1)                  # or B(t0, t1)
-getdata.(cda"AC_H0_MFI/BGSEc,Magnitude", t0, t1)
-
-remotefiles(cda"AC_H0_MFI", t0, t1)   # original file URLs
-
-# Variable attributes from the master CDF, without fetching data
-getmeta(B, "FIELDNAM")
-
-# Direct access to CDF files with fine-grained control
-files = get_data_files("AC_H0_MFI", "BGSEc", t0, t1;
-                       fragment_period = Hour(12),  # Custom fragment size
-                       disable_cache = false)       # Enable/disable caching
+x = cda"OMNI_HRO_1MIN/SYM_H"("2015-03-17", "2015-03-18")  # data in [t0, t1): a lazy CDFVariable
+A = Array(x)              # FILLVAL and values outside VALIDMIN/VALIDMAX are NaN; time is the last dimension
+t = DateTime.(times(x))
+getmeta(x, "UNITS")       # ISTP attributes: CATDESC, UNITS, FILLVAL, DEPEND_1
 ```
+
+## Data
+
+```julia
+t0, t1 = "2023-01-01", "2023-01-02"
+B = CDAWeb.Dataset(id)[var]          # cda"AC_H0_MFI/BGSEc" for literals
+getdata(B, t0, t1)                   # same as B(t0, t1)
+getdata.(cda"AC_H0_MFI/BGSEc,Magnitude", t0, t1)
+ds = cda"AC_H0_MFI"                  # CDAWeb.Dataset("AC_H0_MFI")
+getdata(ds, t0, t1)                  # the whole dataset
+keys(ds)                             # data variable names; values(ds) the variables
+getmeta(B, "FIELDNAM")               # variable attributes from the master CDF, without fetching data
+remotefiles(ds, t0, t1)              # original file URLs
+CDAWeb.Dataset(id; direct = true)[var](t0, t1)  # one variable through CDAWeb's subsetting service, not whole files
+```
+
+Files are cached in `~/.cdaweb/` (or `$CDAWEB_DIR`); `clear_cache!()` clears it.
+
+`keys`, `values` and `getmeta(B)` read the dataset's master CDF, fetched alone (about 100 KB) when not on disk; it may list variables the data files lack, or miss some they have.
 
 ## Discovery
 
@@ -40,7 +45,6 @@ files = get_data_files("AC_H0_MFI", "BGSEc", t0, t1;
 get_datasets("THEMIS", "electric")          # CDAWeb.Datasets
 get_variables("SYM-H"; dataset = "OMNI")    # CDAWeb.Variables
 get_variables("density"; dataset = "MMS1 FPI brst")
-values(cda"THD_L2_SST")                     # data variables, displayed with descriptions
 get_inventory(id, t0, t1)                   # (start, stop) of each interval with data
 ```
 
@@ -49,18 +53,8 @@ get_inventory(id, t0, t1)                   # (start, stop) of each interval wit
 - When nothing matches, an info line gives each term's matches alone.
 - Time ranges come from CDAS and may extend past the data; `get_inventory` gives the intervals with data.
 - `display` shows a row per result, up to 80, variables under a line per dataset, then the matches per id prefix (spacecraft code) to narrow by; `show(stdout, MIME"text/plain"(), x)` shows all. Search variables with the quantity as terms and the mission, instrument and mode as `dataset`.
-- `keys`, `values` and `getmeta(ds[var])` read the dataset's master CDF, fetched alone (about 100 KB) when not on disk; it may list variables the data files lack, or miss some they have.
 - `getmeta(ds)` is the dataset's CDAS entry: `Id`, `Label`, `TimeInterval.Start/End`, `PiName`, `Notes`, `Doi`, `SpaseResourceId`.
 - CDAS metadata (the dataset list) is cached in `~/.cdaweb/metadata/` for a day.
-
-## Features
-
-- Local cache system to avoid redundant downloads with fine-grained control
-  - **Automatic cache management**: Downloaded files and their index live in `~/.cdaweb/`, or `$CDAWEB_DIR` if set
-  - **Fragment-based caching**: Splits time ranges into fixed-duration fragments (default 24 hours) for efficient reuse across overlapping queries
-  - **Manual cache control**: `CDAWeb.cache_metadata()` and `CDAWeb.clear_cache!()` for explicit management of cache metadata
-- **Efficient data access**: Data and metadata are memory-mapped and lazily represented using [CommonDataFormat.jl](https://github.com/JuliaSpacePhysics/CommonDataFormat.jl)
-
 
 ## References
 

@@ -9,20 +9,21 @@ CurrentModule = CDAWeb
 
 Julia interface to NASA's [Coordinated Data Analysis Web](https://cdaweb.gsfc.nasa.gov/) (CDAWeb) for accessing space physics data.
 
-## Installation
-
-```julia
-using Pkg
-Pkg.add("CDAWeb")
-```
-
 ## Quick Example
 
 ```@example quick_example
 using CDAWeb
 using Dates
 
-# Get dataset description
+get_datasets("THEMIS", "electric")
+```
+
+```@example quick_example
+# Data variables and their descriptions
+values(cda"AC_H0_MFI")
+```
+
+```@example quick_example
 getmeta(cda"AC_H0_MFI")
 ```
 
@@ -48,15 +49,12 @@ data = getdata(CDAWeb.Dataset("OMNI_COHO1HR_MERGED_MAG_PLASMA"; direct = true)["
 
 ## Additional Features
 
-### Accessing Master CDF Metadata
+### Variable Attributes
 
-Retrieve metadata without specifying a time range to access the master CDF file:
+From the master CDF, without a time range:
 
 ```@example quick_example
-# Update/download the master CDF files
-CDAWeb.update_master_cdf()
-# Returns metadata from the master CDF for the ACE magnetic field dataset
-find_master_cdf("AC_H0_MFI")["BGSEc"]
+getmeta(cda"AC_H0_MFI/BGSEc")
 ```
 
 ### Cache Management

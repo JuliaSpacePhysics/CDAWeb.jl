@@ -10,7 +10,7 @@ import CommonDataFormat
 using JSON
 using SQLite, DBInterface
 using Tables: columntable
-using SpaceDataModel: SpaceDataModel, TimeRanges, DataSource, AbstractDataset, NoMetadata, getdata, getmeta, remotefiles
+using SpaceDataModel: SpaceDataModel, TimeRanges, DataSource, AbstractDataset, NoMetadata, getdata, getmeta, remotefiles, times
 import CDFDatasets as CDF
 using CDFDatasets: variable, cdfopen
 
@@ -18,7 +18,7 @@ using CDFDatasets: variable, cdfopen
 export get_datasets, get_variables, get_inventory, get_original_file_descs, get_data_file_descs
 # Data access
 export get_data_files
-export getdata, getmeta, remotefiles
+export getdata, getmeta, remotefiles, times
 export clear_cache!, clear_metadata_cache!
 export find_master_cdf
 export @cda_str
