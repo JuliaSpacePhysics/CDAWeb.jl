@@ -31,8 +31,18 @@ SpaceDataModel.getdata(ds::Dataset, t0::DateTime, t1::DateTime; kw...) = _get_da
 
 function SpaceDataModel.getdata(p::Product{Dataset}, t0::DateTime, t1::DateTime; kw...)
     ds = parent(p)
-    return ds.direct ? _get_data(ds.id, p.variable, t0, t1; ds.master_attributes, kw...) :
-           getdata(ds, t0, t1; kw...)[p.variable]
+    ds.direct && return _get_data(ds.id, p.variable, t0, t1; ds.master_attributes, kw...)
+    data = getdata(ds, t0, t1; kw...)
+    return _is_virtual(data, p.variable) ? _get_data(ds.id, p.variable, t0, t1; kw...) : data[p.variable]
+end
+
+# CDAWeb computes virtual variables (e.g. THEMIS ESA quality-filtered spectra) on request: files hold
+# only a placeholder record, which indexing by time would overrun
+function _is_virtual(data, var)
+    src = parent(data)
+    file = src isa AbstractVector ? first(src) : src
+    var in keys(file) || return false
+    return uppercase(string(get(CommonDataFormat.attrib(file[var]), "VIRTUAL", ""))) == "TRUE"
 end
 
 """

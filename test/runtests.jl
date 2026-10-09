@@ -134,6 +134,8 @@ end
     res = getmeta(CDAWeb.Dataset(id))
     @test [d.Id for d in get_datasets(; idPattern = "AC_H2_MFI")] == [id]
     @test_throws ArgumentError CDAWeb.Dataset("ac_h2_mf")
+    # Virtual: the cached files hold a placeholder record
+    @test size(cda"THE_L2_ESA/the_peif_en_efluxQ"("2008-02-26T04:00", "2008-02-26T05:00")) == (32, 38)
     @test CDAWeb.Dataset(res.Doi) == CDAWeb.Dataset(res.SpaseResourceId) == CDAWeb.Dataset(id)
     t0, t1 = DateTime(2020, 1, 1), DateTime(2020, 1, 3)
     @test basename.(remotefiles(CDAWeb.Dataset(id), t0, t1)) == basename.(get_data_files(id, t0, t1))

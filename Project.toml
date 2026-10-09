@@ -8,6 +8,7 @@ projects = ["docs", "test"]
 
 [deps]
 CDFDatasets = "075ae62b-f872-4368-b383-31e3aa6c3154"
+CommonDataFormat = "a9737db6-c05c-4e48-868b-6bc41491d9d9"
 DBInterface = "a10d1c49-ce27-4219-8d33-6db1a4562965"
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
 Downloads = "f43a241f-c20a-4ad4-852c-f6b1247861c6"
@@ -21,6 +22,7 @@ Tar = "a4e569a6-e804-4fa4-b0f3-eef7a1d5b13e"
 
 [compat]
 CDFDatasets = "0.2.3, 0.3"
+CommonDataFormat = "0.3"
 DBInterface = "2"
 Dates = "1"
 Downloads = "1"

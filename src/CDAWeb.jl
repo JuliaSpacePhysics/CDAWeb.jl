@@ -6,6 +6,7 @@ using Tar: extract
 using HTTP
 using PrecompileTools
 using CDFDatasets
+import CommonDataFormat
 using JSON
 using SQLite, DBInterface
 using Tables: columntable
