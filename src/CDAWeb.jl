@@ -15,7 +15,7 @@ import CDFDatasets as CDF
 using CDFDatasets: variable, cdfopen
 
 # RESTful API wrappers
-export get_datasets, get_inventory, get_original_file_descs, get_data_file_descs
+export get_datasets, get_variables, get_inventory, get_original_file_descs, get_data_file_descs
 # Data access
 export get_data_files
 export getdata, getmeta, remotefiles
@@ -46,6 +46,7 @@ __init__() = (BASE_PATH[] = get(ENV, "CDAWEB_DIR", joinpath(homedir(), ".cdaweb"
 
 include("master.jl")
 include("operation.jl")
+include("search.jl")
 include("data.jl")
 include("files.jl")
 include("cache.jl")

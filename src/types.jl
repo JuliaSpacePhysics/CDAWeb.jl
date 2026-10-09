@@ -21,7 +21,7 @@ Dataset(row::JSON.Object; direct=false, master_attributes=false) = Dataset(row["
 # Data endpoints, cache entries and master CDFs are keyed by the CDAS id, so aliases resolve to its row
 function _dataset_row(id)
     rows = get_cached_json(SP_ENDPOINT; id)
-    isempty(rows) && throw(ArgumentError("unknown CDAWeb dataset id $(repr(id))"))
+    isempty(rows) && SpaceDataModel._unknown_id("CDAWeb", [r["Id"]::String for r in get_cached_json(SP_ENDPOINT)], id)
     return only(rows)
 end
 

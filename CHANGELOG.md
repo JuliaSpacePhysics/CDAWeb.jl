@@ -7,6 +7,7 @@
 - `CDAWeb.Dataset <: SpaceDataModel.AbstractDataset`: `getdata(CDAWeb.Dataset(id)[var], t0, t1)`.
 - `getmeta(ds)` and `remotefiles(ds, t0, t1)` for `CDAWeb.Dataset`, which also accepts a DOI or SPASE ResourceID.
 - `keys(ds)` and `values(ds)` list a dataset's data variables: names and `CDAWeb.Variable`s.
+- `get_variables(terms...; dataset)` finds data variables by name or description.
 
 ### Removed
 
@@ -17,11 +18,12 @@
   - `get_data(id, var, t0, t1)`: `cda"id/var"(t0, t1)`, or `CDAWeb.Dataset(id; direct = true)[var](t0, t1)` for CDAWeb's subsetting service (virtual variables).
   - `get_data(id, t0, t1)`: `cda"id"(t0, t1)`.
   - `get_data(id, var)`: `find_master_cdf(id)[var]`.
-- **Breaking**: `get_variables`: `values(cda"id")`, displayed with descriptions; `getmeta(cda"id/var")` for attributes.
-- **Breaking**: `find_datasets`: use `find_master_cdf(id)`.
+- **Breaking**: `find_datasets`: `[find_master_cdf(ds.id) for ds in get_datasets("AC_H0")]`.
 
 ### Changed
 
+- **Breaking**: `get_variables(terms...; dataset)` searches variables by terms and returns `CDAWeb.Variable`s; `values(cda"id")` lists a dataset's, `getmeta(cda"id/var")` gives attributes.
+- **Breaking**: `get_datasets(terms...)` searches by terms, replacing CDAS query keywords, and returns `CDAWeb.Dataset`s; `getmeta(ds)` is the former entry.
 - `CDAWeb.Dataset(id)` validates its id against the dataset list.
 - CDAS metadata (the dataset list) is cached on disk for a day, so `cda"..."` works offline on cached data.
 - Virtual variables (computed by CDAWeb, e.g. THEMIS `the_peif_en_efluxQ`) fetch through CDAWeb's service instead of failing on the placeholder in cached files.

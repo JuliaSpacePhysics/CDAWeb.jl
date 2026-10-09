@@ -5,9 +5,6 @@ using Dates
     @test length(res) > 0
     @test res[1].Id == "sp_phys"
 
-    datasets = get_datasets(; observatoryGroup = "ACE", instrument = "MAG")
-    @test length(datasets) > 0
-
     itypes = CDAWeb.get_instrument_types()
     @test length(itypes) > 0
 
