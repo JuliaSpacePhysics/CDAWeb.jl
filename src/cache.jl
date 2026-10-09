@@ -1,13 +1,35 @@
 # Cache-specific utility functions (database functions are in database.jl)
 
-"""Clear the in-memory metadata cache (datasets, variables, etc.)."""
+"""Clear the metadata cache (datasets, variables, etc.), in memory and on disk."""
 function clear_metadata_cache!()
     lock(() -> empty!(_METADATA_CACHE), _METADATA_LOCK)
+    rm(_metadata_dir(); recursive = true, force = true)
     return
 end
 
 # Every CDAS response is `{"Wrapper": [record, ...]}`
-_json_read1(resp) = Vector{JSON.Object{String, Any}}(first(values(JSON.parse(String(resp.body)))))
+_json_read1(resp) = _json_read1(resp.body)
+_json_read1(body::AbstractVector{UInt8}) = Vector{JSON.Object{String, Any}}(first(values(JSON.parse(String(body)))))
+
+_metadata_dir() = joinpath(BASE_PATH[], "metadata")
+
+# Persisted for a day, so cached data stays reachable offline
+function _fetch_json(url)
+    path = joinpath(_metadata_dir(), replace(url, r"[^[:alnum:]]+" => "_") * ".json")
+    isfile(path) && time() - mtime(path) < 86400 && return _json_read1(read(path))
+    resp = try
+        _http_get(url)
+    catch e
+        isfile(path) || rethrow()
+        @warn "Using the metadata cached at $path" exception = e
+        return _json_read1(read(path))
+    end
+    mkpath(dirname(path))
+    tmp = tempname(dirname(path))
+    write(tmp, resp.body)
+    mv(tmp, path; force = true)
+    return _json_read1(resp)
+end
 
 function get_cached_json(url; use_cache = true, query...)
     return if use_cache
@@ -15,7 +37,7 @@ function get_cached_json(url; use_cache = true, query...)
         # concurrent misses may fetch twice, and the first stored result wins
         result = lock(() -> get(_METADATA_CACHE, url, nothing), _METADATA_LOCK)
         if isnothing(result)
-            fetched = _json_read1(_http_get(url))
+            fetched = _fetch_json(url)
             result = lock(() -> get!(_METADATA_CACHE, url, fetched), _METADATA_LOCK)
         end
         _filter_metadata(result, query)
