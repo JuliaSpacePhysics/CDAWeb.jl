@@ -102,7 +102,7 @@ end
 """Find cached files and missing time ranges using fragment-based caching and SQL (for orig=false)."""
 function find_cached_and_missing(dataset, variable, start_time, stop_time; fragment_period::Period=Hour(24))
     # Split time range into fixed-duration fragments with aligned boundaries for consistent caching
-    fragments = TimeRanges(floor(start_time, fragment_period), ceil(stop_time, fragment_period), fragment_period)
+    fragments = IntervalRange(floor(start_time, fragment_period), ceil(stop_time, fragment_period), fragment_period)
 
     # A deleted file leaves a gap, so its fragments are refetched
     entries = filter(e -> isfile(e[3]), _query(start_time, stop_time, dataset, variable))
@@ -139,7 +139,13 @@ function find_cached_and_missing(dataset, variable, start_time, stop_time; fragm
             end
             entry_idx += 1
         end
-        !fragment_covered && push!(missings, (frag_start, frag_stop))
+        fragment_covered && continue
+        # Contiguous missing fragments merge, to be fetched in one request
+        if !isempty(missings) && last(missings[end]) == frag_start
+            missings[end] = (first(missings[end]), frag_stop)
+        else
+            push!(missings, (frag_start, frag_stop))
+        end
     end
 
     return collect(cached_files), missings
@@ -177,7 +183,7 @@ function _get_data_files(start_time, stop_time, dataset, args...; disable_cache=
 
     return if !isempty(missing_ranges)
         # Fetch missing time ranges
-        all_files = mapreduce(vcat, group_contiguous_fragments(missing_ranges); init=cached_files) do (range_start, range_stop)
+        all_files = mapreduce(vcat, missing_ranges; init=cached_files) do (range_start, range_stop)
             @debug "Fetching missing range: $(range_start) to $(range_stop)"
             _fetch_and_cache_files!(range_start, range_stop, dataset, args...; kw...)
         end

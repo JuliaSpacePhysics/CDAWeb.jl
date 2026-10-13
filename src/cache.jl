@@ -119,27 +119,3 @@ function _add_files_to_cache!(requested_start, requested_stop, files, dataset, a
     _update_cache!(start_times, end_times, files, dataset, args...)
     return
 end
-
-# Fragment-based caching utilities
-
-"""Group contiguous fragments to minimize API calls."""
-function group_contiguous_fragments(fragments)
-    isempty(fragments) && return Tuple{DateTime, DateTime}[]
-    grouped = Tuple{DateTime, DateTime}[]
-    current_start, current_stop = fragments[1]
-
-    for i in 2:length(fragments)
-        frag_start, frag_stop = fragments[i]
-        if frag_start == current_stop
-            # Contiguous, extend current range
-            current_stop = frag_stop
-        else
-            # Gap found, save current range and start new one
-            push!(grouped, (current_start, current_stop))
-            current_start, current_stop = frag_start, frag_stop
-        end
-    end
-    # Add the last range
-    push!(grouped, (current_start, current_stop))
-    return grouped
-end

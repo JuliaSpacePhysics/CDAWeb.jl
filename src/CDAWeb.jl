@@ -10,7 +10,8 @@ import CommonDataFormat
 using JSON
 using SQLite, DBInterface
 using Tables: columntable
-using SpaceDataModel: SpaceDataModel, TimeRanges, DataSource, AbstractDataset, NoMetadata, getdata, getmeta, getdim, remotefiles, times
+using SpaceDataModel: SpaceDataModel, DataSource, AbstractDataset, NoMetadata, getdata, getmeta, getdim, remotefiles
+using TimeseriesUtilities: IntervalRange, times
 import CDFDatasets as CDF
 using CDFDatasets: variable, cdfopen
 
