@@ -22,7 +22,7 @@ Tar = "a4e569a6-e804-4fa4-b0f3-eef7a1d5b13e"
 
 [compat]
 CDFDatasets = "0.2.3, 0.3"
-CommonDataFormat = "0.3"
+CommonDataFormat = "0.3, 0.4"
 DBInterface = "2"
 Dates = "1"
 Downloads = "1"
