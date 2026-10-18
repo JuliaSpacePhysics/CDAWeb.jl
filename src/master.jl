@@ -76,7 +76,7 @@ function _master_path(id)
 end
 
 # Data variables of a dataset, from its master CDF, which may list variables its data files lack or
-# miss some they have. Read from the raw CDF (about 0.5 ms): CDFDatasets' variables decode data on access.
+# miss some they have. Read from the raw CDF (about 0.5 ms): CDFDatasets' variables resolve validity checks on construction.
 const _VarInfo = @NamedTuple{name::String, description::String}
 const _VARIABLES = Dict{String, Vector{_VarInfo}}()
 
@@ -90,10 +90,10 @@ function _variables(id)
 end
 
 function _data_variables(path)
-    cdf = CommonDataFormat.CDFDataset(path)
+    cdf = parent(CDFDataset(path))
     out = _VarInfo[]
     for name in keys(cdf)
-        a = CommonDataFormat.attrib(cdf[name])
+        a = CDF.attrib(cdf[name])
         get(a, "VAR_TYPE", "") == "data" || continue
         push!(out, (; name = String(name), description = _squeeze(string(get(a, "CATDESC", "")))))
     end
