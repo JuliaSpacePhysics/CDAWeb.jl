@@ -84,12 +84,12 @@ function SpaceDataModel.getdata(v::Variable, t0::DateTime, t1::DateTime; kw...)
     return _is_virtual(data, v.name) ? _get_data(ds.id, v.name, t0, t1; kw...) : data[v.name]
 end
 
-# CDAWeb computes virtual variables (e.g. THEMIS ESA quality-filtered spectra) on request: files hold
-# only a placeholder record, which indexing by time would overrun
+# CDAWeb computes virtual variables on request: files hold only a placeholder record, which indexing
+# by time would overrun (THEMIS ESA quality-filtered spectra), or lack them (OMNI2 `KP1800`)
 function _is_virtual(data, var)
     src = parent(data)
     file = src isa AbstractVector ? first(src) : src
-    var in keys(file) || return false
+    var in keys(file) || return true
     return uppercase(string(get(CDF.attrib(file[var]), "VIRTUAL", ""))) == "TRUE"
 end
 

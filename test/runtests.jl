@@ -148,8 +148,9 @@ end
     @test startswith(first(get_datasets("ACE", "magnetic")).id, "AC_")
     # Words match separately, not as a phrase
     @test "PSP_FLD_L2_MAG_RTN" in [d.id for d in get_datasets("PSP FIELDS magnetometer RTN")]
-    # Virtual: the cached files hold a placeholder record
+    # Virtual: the cached files hold a placeholder record, or lack the variable
     @test size(cda"THE_L2_ESA/the_peif_en_efluxQ"("2008-02-26T04:00", "2008-02-26T05:00")) == (32, 38)
+    @test length(cda"OMNI2_H0_MRG1HR/KP1800"("2020-01-01", "2020-01-02")) == 24
     # Whole words: "MAG" skips "magnetometer"; plurals match; `*` makes a prefix
     @test length(get_datasets("PSP", "MAG")) < 10
     @test "AC_H6_SWI" in [d.id for d in get_datasets("proton")]   # label: "Protons"
