@@ -9,8 +9,8 @@ PrecompileTools.@setup_workload begin
         mktempdir() do dir
             BASE_PATH[] = dir
             try
-                _add_files_to_cache!(t0, t1, [file], dataset)
-                _add_files_to_cache!(t0, t1, [file], dataset, var)
+                _add_files_to_cache!(t0, t1, [(t0, t1)], [file], dataset)
+                _add_files_to_cache!(t0, t1, [(t0, t1)], [file], dataset, var)
                 # A cache miss would fall through to the network
                 isempty(last(find_cached_and_missing(dataset, t0, t1))) &&
                     isempty(last(find_cached_and_missing(dataset, var, t0, t1))) ||

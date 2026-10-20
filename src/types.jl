@@ -36,7 +36,7 @@ function Base.show(io::IO, ds::Dataset)
 end
 
 SpaceDataModel.name(ds::Dataset) = ds.id
-SpaceDataModel.remotefiles(ds::Dataset, t0, t1) = _get_file_urls_from_api(ds.id, DateTime(t0), DateTime(t1))
+SpaceDataModel.remotefiles(ds::Dataset, t0, t1) = [d.url for d in _get_file_descriptions(ds.id, DateTime(t0), DateTime(t1))]
 function SpaceDataModel.getdata(ds::Dataset, t0::DateTime, t1::DateTime; kw...)
     return try
         _get_dataset(ds.id, t0, t1; kw...)

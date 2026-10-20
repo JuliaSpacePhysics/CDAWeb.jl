@@ -35,21 +35,27 @@ function _build_request_url(dataset, start_time, stop_time)
 end
 
 
-function _get_file_urls_from_api(args...; status_exception=false, kw...)::Vector{String}
+const _FileDescription = @NamedTuple{url::String, mime::String, start::DateTime, stop::DateTime}
+
+function _get_file_descriptions(args...; status_exception=false, kw...)::Vector{_FileDescription}
     url = _build_request_url(args...; kw...)
     @debug "Requesting data from CDAWeb: $(url)"
     # Set headers to request JSON response
     response = _http_get(url; status_exception)
     data = JSON.parse(String(response.body))
     return if haskey(data, "FileDescription")
-        [desc["Name"] for desc in data["FileDescription"]]
+        [(; url = desc["Name"], mime = desc["MimeType"],
+            start = _parse_cdas_time(desc["StartTime"]), stop = _parse_cdas_time(desc["EndTime"]))
+         for desc in data["FileDescription"]]
     elseif no_data_available(data)
-        String[]
+        _FileDescription[]
     else
         # try again and set status_exception to true to throw an error
-        _get_file_urls_from_api(args...; status_exception=true, kw...)
+        _get_file_descriptions(args...; status_exception=true, kw...)
     end
 end
+
+_parse_cdas_time(s) = DateTime(chopsuffix(s, "Z"))
 
 # CDFDatasets reads only CDF, yet some datasets' original files are not (ICON's are NetCDF); CDAWeb's
 # subsetting service serves any dataset as CDF. Found on listing, before downloading, and remembered.
@@ -63,13 +69,14 @@ Base.showerror(io::IO, e::_NotCDF) = print(io, e.dataset, "'s original files are
 
 """Fetch files from API, download them, and add to cache."""
 function _fetch_and_cache_files!(t0, t1, args...; disable_cache=false, kw...)
-    file_urls = _get_file_urls_from_api(args..., t0, t1; kw...)
-    if length(args) == 1 && !all(endswith(".cdf"), file_urls)
+    descs = _get_file_descriptions(args..., t0, t1; kw...)
+    if length(args) == 1 && any(d -> d.mime != "application/x-cdf", descs)
         lock(() -> push!(_NOT_CDF, only(args)), _METADATA_LOCK)
         throw(_NotCDF(only(args)))
     end
-    file_paths = _download_file.(file_urls, args...)
-    disable_cache || !isempty(file_paths) && _add_files_to_cache!(t0, t1, file_paths, args...)
+    file_paths = [_download_file(d.url, args...) for d in descs]
+    disable_cache || isempty(file_paths) ||
+        _add_files_to_cache!(t0, t1, [(d.start, d.stop) for d in descs], file_paths, args...)
     return file_paths
 end
 

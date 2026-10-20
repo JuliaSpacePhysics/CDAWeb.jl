@@ -79,20 +79,6 @@ function clear_cache!()
     return
 end
 
-# Select time variable(s) from the file and return the extrema of the time variable(s).
-@inline function _get_file_time_range(file)
-    dataset = CDFDataset(file)
-    t0 = typemax(DateTime)
-    t1 = typemin(DateTime)
-    for (_, var) in dataset
-        isempty(var) && continue
-        eltype(var) <: Dates.AbstractDateTime || continue
-        t0 = min(t0, DateTime(var[1]))
-        t1 = max(t1, DateTime(var[end]))
-    end
-    return t0 > t1 ? nothing : (t0, t1)  # Return nothing if no DateTime found
-end
-
 # interval with a left closed and right open endpoint
 function _expand_time_ranges(timeranges, requested_start, requested_stop)
     start_times = first.(timeranges)
@@ -108,13 +94,7 @@ function _expand_time_ranges(timeranges, requested_start, requested_stop)
     return start_times, end_times
 end
 
-function _add_files_to_cache!(requested_start, requested_stop, files, dataset, args...)
-    timeranges = _get_file_time_range.(files)
-    if any(isnothing, timeranges)
-        @debug "Could not determine time range for $files, skipping cache metadata update"
-        return
-    end
-
+function _add_files_to_cache!(requested_start, requested_stop, timeranges, files, dataset, args...)
     start_times, end_times = _expand_time_ranges(timeranges, requested_start, requested_stop)
     _update_cache!(start_times, end_times, files, dataset, args...)
     return
