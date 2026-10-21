@@ -123,6 +123,15 @@ end
     end
 end
 
+# THEMIS state files' filled epochs are 1970 support values
+@testset "Cache ranges come from CDAWeb's file times" begin
+    with_temp_cache() do
+        id, d0 = "THA_L1_STATE", DateTime(2022, 1, 24)
+        get_data_files(id, d0, d0 + Day(1))
+        @test isempty(first(CDAWeb.find_cached_and_missing(id, d0 - Day(1), d0)))
+    end
+end
+
 @testset "Processed files for several variables" begin
     files = get_data_files("OMNI_COHO1HR_MERGED_MAG_PLASMA", ["BR", "BT"], DateTime(2020, 1, 1), DateTime(2020, 1, 2); disable_cache = true)
     ds = CDFDataset(only(files))
