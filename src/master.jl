@@ -19,7 +19,7 @@ function update_master_cdf(masters_url = master_url; verbose = false)
         rm(_masters_path(); recursive = true, force = true)
         download_and_extract_master_cdf(masters_url)
         write(cache_file, last_modified)
-        lock(() -> empty!(_VARIABLES), _METADATA_LOCK)
+        lock(() -> (empty!(_VARIABLES); empty!(_NO_MASTER)), _METADATA_LOCK)
         return true
     end
     return false
@@ -48,13 +48,18 @@ function _find_master_cdf(name)
     end
 end
 
+_master_cdf(id) = CDFDataset(@something _master_path(id) throw(ArgumentError("No master CDF for $(id)")))
+
 function find_master_cdf(name)
     file = _find_master_cdf(name)
     return !isnothing(file) ? file : throw(ArgumentError("No master CDF matches $(name) in $(_masters_path())"))
 end
 
+const _NO_MASTER = Set{String}()
+
 # master.tar lags the directory it is built from: masters of datasets added since are only there one by one
 function _master_path(id)
+    lock(() -> id in _NO_MASTER, _METADATA_LOCK) && return nothing
     file = "$(lowercase(id))_00000000_v01.cdf"
     path = joinpath(_masters_path(), file)
     isfile(path) && return path
@@ -65,7 +70,7 @@ function _master_path(id)
     resp = try
         HTTP.get("$(dirname(master_url))/$file")
     catch e
-        e isa HTTP.StatusError && e.status == 404 && return nothing
+        e isa HTTP.StatusError && e.status == 404 && return (lock(() -> push!(_NO_MASTER, id), _METADATA_LOCK); nothing)
         rethrow()
     end
     mkpath(_masters_path())

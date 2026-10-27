@@ -21,7 +21,7 @@ Tar = "a4e569a6-e804-4fa4-b0f3-eef7a1d5b13e"
 TimeseriesUtilities = "31d49243-0742-49c1-b8d2-db113b74581e"
 
 [compat]
-CDFDatasets = "0.2.3, 0.3, 0.4"
+CDFDatasets = "0.4.2"
 DBInterface = "2"
 Dates = "1"
 Downloads = "1"

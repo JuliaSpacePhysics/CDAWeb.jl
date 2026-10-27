@@ -9,11 +9,11 @@ function _get_data(dataset, var, start_time, stop_time; master_attributes = fals
     # Handle case where no data files are available (e.g., 404 error)
     if isempty(file_paths)
         @warn "No data available for $(dataset)/$(var) in range $(start_time) to $(stop_time). Returning empty Variable from master CDF."
-        master_cdf = find_master_cdf(dataset)
+        master_cdf = _master_cdf(dataset)
         return master_cdf[var]
     end
     ds = cdfopen(file_paths, start_time, stop_time)
-    metadata = master_attributes ? find_master_cdf(dataset)[var].attrib : nothing
+    metadata = master_attributes ? _master_cdf(dataset)[var].attrib : nothing
     return variable(ds, var; metadata)
 end
 

@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Changed
+
+- A dataset's master CDF overrides its files' variable attributes and non-record-varying variables and fills their global attributes, as CDAWeb's own services do: e.g. `FILLVAL`, `VALIDMIN`, `VALIDMAX` and `DEPEND_0`.
+
 ## [0.3.0] - 2026-10-09
 
 ### Added
