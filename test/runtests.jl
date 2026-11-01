@@ -1,7 +1,6 @@
 using CDAWeb
 using CDFDatasets
 using CDFDatasets: AbstractCDFVariable
-using CDFDatasets.CommonDataModel
 using Dates
 using Test
 

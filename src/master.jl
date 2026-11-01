@@ -98,7 +98,7 @@ function _data_variables(path)
     cdf = parent(CDFDataset(path))
     out = _VarInfo[]
     for name in keys(cdf)
-        a = CDF.attrib(cdf[name])
+        a = cdf[name].attrib
         get(a, "VAR_TYPE", "") == "data" || continue
         push!(out, (; name = String(name), description = _squeeze(string(get(a, "CATDESC", "")))))
     end
