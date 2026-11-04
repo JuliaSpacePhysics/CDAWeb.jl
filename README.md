@@ -1,6 +1,6 @@
 # CDAWeb
 
-[![Dev](https://img.shields.io/badge/docs-dev-blue.svg?logo=julia)](https://JuliaSpacePhysics.github.io/CDAWeb.jl/dev/) [![DOI](https://zenodo.org/badge/1061976595.svg)](https://doi.org/10.5281/zenodo.17519096)
+[![DOI](https://zenodo.org/badge/1061976595.svg)](https://doi.org/10.5281/zenodo.17519096)
 
 Julia interface to NASA's CDAWeb RESTful services for accessing space physics data.
 
@@ -11,7 +11,7 @@ using Pkg; Pkg.add("CDAWeb")
 using CDAWeb, Dates
 
 ds = cda"OMNI_HRO_1MIN"
-display(values(ds))         # data variables with descriptions, from the master CDF (data files may lack some); keys(ds) the names
+display(values(ds))         # data variables with descriptions, from master CDF; keys(ds) the names
 t0, t1 = "2023-01-01", "2023-01-02"
 var = cda"OMNI_HRO_1MIN/SYM_H"  # == `ds["SYM_H"]`
 getmeta(var, "CATDESC")   # ISTP attributes: CATDESC, FIELDNAM, UNITS, FILLVAL, DEPEND_1
@@ -39,7 +39,7 @@ get_variables("density"; dataset = "MMS1 FPI brst")
 - `get_variables` terms must all match one data variable's name or description (`CATDESC`), and `dataset` terms its dataset as above.
 - Datasets whose mission or spacecraft match more terms come first (`"Wind"` lists `WI_*` before ACE's "Solar Wind Experiment"), single-mission before merged (OMNI), then by id.
 - When nothing matches, an info line gives each term's matches alone.
-- `display` shows a row per result, up to 80 with labels cut at 160 characters, variables under a line per dataset, then the matches per id prefix (spacecraft code) to narrow by; `show(stdout, MIME"text/plain"(), x)` shows all.
+- `display` shows a row per result, up to 80 with labels, variables under a line per dataset, then the matches per id prefix (spacecraft code) to narrow by; `show(stdout, MIME"text/plain"(), x)` shows all.
 - `getmeta(ds)` is the dataset's CDAS entry: `Id`, `Label`, `TimeInterval.Start/End`, `PiName`, `Notes`, `Doi`, `SpaseResourceId`.
 - CDAS metadata (the dataset list) is cached in `~/.cdaweb/metadata/` for a day.
 
