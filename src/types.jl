@@ -69,7 +69,7 @@ function SpaceDataModel.getmeta(v::Variable)
     path = _master_path(v.dataset.id)
     isnothing(path) && return NoMetadata()
     cdf = parent(CDFDataset(path))
-    return v.name in keys(cdf) ? CDF.attrib(cdf[v.name]) : NoMetadata()
+    return v.name in keys(cdf) ? cdf[v.name].attrib : NoMetadata()
 end
 
 function SpaceDataModel.getdata(v::Variable, t0::DateTime, t1::DateTime; kw...)
@@ -90,7 +90,7 @@ function _is_virtual(data, var)
     src = parent(data)
     file = src isa AbstractVector ? first(src) : src
     var in keys(file) || return true
-    return uppercase(string(get(CDF.attrib(file[var]), "VIRTUAL", ""))) == "TRUE"
+    return uppercase(string(get(file[var].attrib, "VIRTUAL", ""))) == "TRUE"
 end
 
 """
