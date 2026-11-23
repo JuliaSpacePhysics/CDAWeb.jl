@@ -1,22 +1,23 @@
 """
-    CDAWeb.Dataset(id; direct = false, master_attributes = false)
+    CDAWeb.Dataset(id; direct = false, master_attributes = false, kw...)
 
 The CDAWeb dataset `id`: a CDAS id (`AC_H2_MFI`), DOI (`10.48322/fh85-fj47`) or SPASE ResourceID
 (`spase://NASA/NumericalData/ACE/MAG/L2/PT1H`); `ds[var]` is its [`CDAWeb.Variable`](@ref).
 
 `direct` fetches a variable through CDAWeb's subsetting service rather than indexing the whole
 cached dataset; `master_attributes` (direct only) takes its attributes from the master CDF.
-`getdata` keywords go to [`get_data_files`](@ref).
+`kw` go to CDFDatasets' `cdfopen` for every read; `getdata` keywords go to [`get_data_files`](@ref).
 """
 struct Dataset <: AbstractDataset
     id::String
     direct::Bool
     master_attributes::Bool
+    open_kw::NamedTuple
     metadata::JSON.Object{String, Any}
 end
 
 Dataset(id::AbstractString; kw...) = Dataset(_dataset_row(id); kw...)
-Dataset(row::JSON.Object; direct=false, master_attributes=false) = Dataset(row["Id"], direct, master_attributes, row)
+Dataset(row::JSON.Object; direct = false, master_attributes = false, open_kw...) = Dataset(row["Id"], direct, master_attributes, NamedTuple(open_kw), row)
 
 # Data endpoints, cache entries and master CDFs are keyed by the CDAS id, so aliases resolve to its row
 function _dataset_row(id)
@@ -26,12 +27,15 @@ function _dataset_row(id)
 end
 
 # `metadata` is a function of `id`
-Base.:(==)(a::Dataset, b::Dataset) = (a.id, a.direct, a.master_attributes) == (b.id, b.direct, b.master_attributes)
-Base.hash(ds::Dataset, h::UInt) = hash((ds.id, ds.direct, ds.master_attributes), h)
+_key(ds::Dataset) = (ds.id, ds.direct, ds.master_attributes, ds.open_kw)
+Base.:(==)(a::Dataset, b::Dataset) = _key(a) == _key(b)
+Base.hash(ds::Dataset, h::UInt) = hash(_key(ds), h)
 
 function Base.show(io::IO, ds::Dataset)
+    kw = Pair{Symbol, Any}[pairs(ds.open_kw)...]
+    ds.direct && pushfirst!(kw, :direct => true, (ds.master_attributes ? (:master_attributes => true,) : ())...)
     print(io, "CDAWeb.Dataset(", repr(ds.id))
-    ds.direct && print(io, "; direct = true", ds.master_attributes ? ", master_attributes = true" : "")
+    isempty(kw) || print(io, "; ", join(("$k = $(repr(v))" for (k, v) in kw), ", "))
     print(io, ")")
 end
 
@@ -39,10 +43,10 @@ SpaceDataModel.name(ds::Dataset) = ds.id
 SpaceDataModel.remotefiles(ds::Dataset, t0, t1) = [d.url for d in _get_file_descriptions(ds.id, DateTime(t0), DateTime(t1))]
 function SpaceDataModel.getdata(ds::Dataset, t0::DateTime, t1::DateTime; kw...)
     return try
-        _get_dataset(ds.id, t0, t1; kw...)
+        _get_dataset(ds.id, t0, t1; ds.open_kw, kw...)
     catch e
         e isa _NotCDF || rethrow()
-        cdfopen(get_data_files(ds.id, keys(ds), t0, t1; kw...), t0, t1)
+        cdfopen(get_data_files(ds.id, keys(ds), t0, t1; kw...), t0, t1; ds.open_kw...)
     end
 end
 Base.keys(ds::Dataset) = [v.name for v in _variables(ds.id)]
@@ -74,14 +78,14 @@ end
 
 function SpaceDataModel.getdata(v::Variable, t0::DateTime, t1::DateTime; kw...)
     ds = v.dataset
-    ds.direct && return _get_data(ds.id, v.name, t0, t1; ds.master_attributes, kw...)
+    ds.direct && return _get_data(ds.id, v.name, t0, t1; ds.master_attributes, ds.open_kw, kw...)
     data = try
-        _get_dataset(ds.id, t0, t1; kw...)
+        _get_dataset(ds.id, t0, t1; ds.open_kw, kw...)
     catch e
         e isa _NotCDF || rethrow()
-        return _get_data(ds.id, v.name, t0, t1; kw...)
+        return _get_data(ds.id, v.name, t0, t1; ds.open_kw, kw...)
     end
-    return _is_virtual(data, v.name) ? _get_data(ds.id, v.name, t0, t1; kw...) : data[v.name]
+    return _is_virtual(data, v.name) ? _get_data(ds.id, v.name, t0, t1; ds.open_kw, kw...) : data[v.name]
 end
 
 # CDAWeb computes virtual variables on request: files hold only a placeholder record, which indexing

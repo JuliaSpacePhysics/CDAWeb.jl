@@ -3,7 +3,7 @@ _format_time(time::AbstractString) = _format_time(DateTime(time))
 
 # https://github.com/SciQLop/PyISTP/blob/main/pyistp/_impl.py#L16
 
-function _get_data(dataset, var, start_time, stop_time; master_attributes = false, kw...)
+function _get_data(dataset, var, start_time, stop_time; master_attributes = false, open_kw = (;), kw...)
     file_paths = get_data_files(dataset, var, start_time, stop_time; kw...)
 
     # Handle case where no data files are available (e.g., 404 error)
@@ -12,7 +12,7 @@ function _get_data(dataset, var, start_time, stop_time; master_attributes = fals
         master_cdf = _master_cdf(dataset)
         return master_cdf[var]
     end
-    ds = cdfopen(file_paths, start_time, stop_time)
+    ds = cdfopen(file_paths, start_time, stop_time; open_kw...)
     metadata = master_attributes ? _master_cdf(dataset)[var].attrib : nothing
     return variable(ds, var; metadata)
 end

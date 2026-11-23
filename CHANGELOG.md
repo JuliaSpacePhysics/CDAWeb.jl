@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased]
+
+### Fixed
+
+- Reads mask only `FILLVAL` (CDFDatasets 0.6): values outside `VALIDMIN`/`VALIDMAX` are kept.
+
 ## [0.3.4] - 2026-10-27
 
 ### Changed

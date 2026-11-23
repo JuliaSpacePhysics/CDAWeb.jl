@@ -18,7 +18,8 @@ getmeta(var, "CATDESC")   # ISTP attributes: CATDESC, FIELDNAM, UNITS, FILLVAL, 
 
 getdata(ds, t0, t1)  # the whole dataset
 x = getdata(var, t0, t1)  # == `var(t0, t1)`: data in [t0, t1), a lazy CDFVariable
-A = Array(x)              # FILLVAL and values outside VALIDMIN/VALIDMAX are NaN; time is the last dimension
+A = Array(x)              # FILLVAL values are NaN; time is the last dimension
+CDAWeb.Dataset("OMNI_HRO_1MIN"; checks = (; validmin = true, validmax = true))["SYM_H"](t0, t1)  # also NaN outside VALIDMIN/VALIDMAX, which often exclude real data
 t = times(x)
 getdim(x, 1)              # values along dimension 1: its DEPEND_1 (e.g. a spectrogram's energies) or `axes(x, 1)`
 getmeta(x, "VALIDMIN")    # attributes of the fetched files, which may differ from the master CDF's
